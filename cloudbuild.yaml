@@ -1,0 +1,18 @@
+steps:
+  - name: 'gcr.io/cloud-builders/git'
+    args: ['clone', '--recurse-submodules', 'https://github.com/Kovalevskyi-Academy/testing-framework.git']
+  - name: 'gcr.io/cloud-builders/git'
+    args: ['checkout', '$COMMIT_SHA']
+    dir: 'testing-framework'
+  - name: 'maven:3.6.3-openjdk-15'
+    args: ['mvn', 'compile']
+    dir: 'testing-framework'
+  - name: 'maven:3.6.3-openjdk-15'
+    args: [ 'mvn', 'test' ]
+    dir: 'testing-framework'
+  - name: 'maven:3.6.3-openjdk-15'
+    args: [ 'mvn', 'package' ]
+    dir: 'testing-framework'
+  - name: 'maven:3.6.3-openjdk-15'
+    args: [ 'mvn', 'deploy' ]
+    dir: 'testing-framework'

@@ -5,8 +5,32 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.kovalevskyi.academy.testing</groupId>
-    <artifactId>testing-framework</artifactId>
+    <artifactId>TestingFramework</artifactId>
     <version>1.0</version>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>artifact-registry</id>
+            <url>artifactregistry://us-west2-maven.pkg.dev/artifacts-298104/main</url>
+        </snapshotRepository>
+        <repository>
+            <id>artifact-registry</id>
+            <url>artifactregistry://us-west2-maven.pkg.dev/artifacts-298104/main</url>
+        </repository>
+    </distributionManagement>
+
+    <repositories>
+        <repository>
+            <id>artifact-registry</id>
+            <url>artifactregistry://us-west2-maven.pkg.dev/artifacts-298104/main</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 
     <properties>
         <javaVersion>13</javaVersion>

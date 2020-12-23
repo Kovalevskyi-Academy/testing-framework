@@ -8,6 +8,13 @@
     <artifactId>TestingFramework</artifactId>
     <version>1.1-SNAPSHOT</version>
 
+    <properties>
+        <javaVersion>13</javaVersion>
+        <maven.compiler.target>${javaVersion}</maven.compiler.target>
+        <maven.compiler.source>${javaVersion}</maven.compiler.source>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <distributionManagement>
         <snapshotRepository>
             <id>artifact-registry</id>
@@ -41,13 +48,6 @@
             </extension>
         </extensions>
     </build>
-
-    <properties>
-        <javaVersion>13</javaVersion>
-        <maven.compiler.target>${javaVersion}</maven.compiler.target>
-        <maven.compiler.source>${javaVersion}</maven.compiler.source>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    </properties>
     <dependencies>
         <dependency>
             <groupId>org.junit.platform</groupId>

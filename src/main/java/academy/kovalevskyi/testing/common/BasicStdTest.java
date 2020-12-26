@@ -1,6 +1,6 @@
-package com.kovalevskyi.academy.testing.common;
+package academy.kovalevskyi.testing.common;
 
-import com.kovalevskyi.academy.testing.AbstractTestExecutor;
+import academy.kovalevskyi.testing.AbstractTestExecutor;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import org.junit.jupiter.api.BeforeEach;

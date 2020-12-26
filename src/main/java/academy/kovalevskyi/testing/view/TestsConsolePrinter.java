@@ -1,4 +1,4 @@
-package com.kovalevskyi.academy.testing.view;
+package academy.kovalevskyi.testing.view;
 
 import java.util.Arrays;
 import org.junit.jupiter.api.extension.AfterAllCallback;

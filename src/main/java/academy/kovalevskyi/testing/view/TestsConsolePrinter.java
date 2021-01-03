@@ -1,6 +1,7 @@
 package academy.kovalevskyi.testing.view;
 
-import java.util.Arrays;
+import org.fusesource.jansi.Ansi;
+import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -10,6 +11,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   private int successful = 0;
   private int failed = 0;
+  private boolean isNoClass;
   private static boolean isSilentMode;
 
   public static void setSilentMode(boolean silentMode) {
@@ -17,37 +19,53 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   }
 
   @Override
+  public void beforeAll(ExtensionContext extensionContext) {
+    AnsiConsole.systemInstall();
+    if (!isSilentMode) {
+      System.out.printf("Result of %s\n\n", extensionContext.getDisplayName());
+    }
+  }
+
+  @Override
   public void testSuccessful(ExtensionContext context) {
     successful++;
     if (!isSilentMode) {
-      System.out.println(context.getDisplayName() + " - OK");
+      System.out.println(Ansi
+          .ansi()
+          .a(context.getDisplayName())
+          .a(" - ")
+          .fgGreen()
+          .a("OK")
+          .reset());
     }
   }
 
   @Override
   public void testFailed(ExtensionContext context, Throwable cause) {
     failed++;
-    if (!isSilentMode) {
-      System.out.println(context.getDisplayName() + " - BAD");
+    if (!isNoClass) {
       if (cause instanceof NoClassDefFoundError) {
-        System.out.println(
-            "class under test not found, very-very likely you have incorrectly set class path "
-                + "so Zeus can not find it.");
+        isNoClass = true;
+        System.out.println(Ansi
+            .ansi()
+            .fgRed()
+            .a("Class under test not found, very-very likely you have incorrectly set class path\n")
+            .a("or you have changed structure of the project so Zeus can not find the class below\n")
+            .a("'")
+            .a(cause.getMessage())
+            .a("'")
+            .reset());
+      } else {
+        System.out.println(Ansi
+            .ansi()
+            .a(context.getDisplayName())
+            .a(" - ")
+            .fgRed()
+            .a("BAD")
+            .a('\n')
+            .a(cause.getMessage())
+            .reset());
       }
-      Arrays.stream(cause.getMessage().split("\n"))
-          .sequential()
-          .filter(s -> !s.isEmpty())
-          .forEach(System.out::println);
-    } else {
-      System.out.println(cause.getMessage());
-    }
-  }
-
-  @Override
-  public void beforeAll(ExtensionContext extensionContext) {
-    if (!isSilentMode) {
-      var testClass = extensionContext.getTestClass();
-      testClass.ifPresent(entry -> System.out.printf("Result of %s\n\n", entry.getSimpleName()));
     }
   }
 
@@ -59,5 +77,6 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
       System.out.printf("Failed : %d\n", failed);
       System.out.print("------------------------------\n");
     }
+    AnsiConsole.systemUninstall();
   }
 }

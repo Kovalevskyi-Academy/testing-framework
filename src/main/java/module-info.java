@@ -6,4 +6,5 @@ module academy.kovalevskyi.testing {
     requires org.junit.jupiter.api;
     requires org.junit.platform.launcher;
     requires com.google.common;
+    requires org.fusesource.jansi;
 }

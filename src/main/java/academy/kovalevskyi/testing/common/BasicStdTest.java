@@ -12,13 +12,13 @@ public abstract class BasicStdTest extends AbstractTestExecutor {
   private PrintStream printStream;
 
   @BeforeEach
-  public void init() {
+  public void setUpCustomOutput() {
     printStream = System.out;
     System.setOut(new PrintStream(outputStreamCaptor));
   }
 
   @AfterEach
-  public void destroy() {
+  public void setUpDefaultOutput() {
     System.setOut(printStream);
   }
 }

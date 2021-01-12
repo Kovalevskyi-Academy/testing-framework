@@ -13,7 +13,7 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 @ExtendWith(TestsConsolePrinter.class)
 public abstract class AbstractTestExecutor {
 
-  SummaryGeneratingListener listener = new SummaryGeneratingListener();
+  private final SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
   /**
    * This method does ... what exactly?

@@ -80,8 +80,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
     if (!isSilentMode) {
       System.out.printf("\nTotal: %d\n", successful + failed);
       System.out.printf("Successful: %d\n", successful);
-      System.out.printf("Failed : %d\n", failed);
-      System.out.print("------------------------------\n");
+      System.out.printf("Failed : %d\n\n", failed);
     } else if (failed == 0) {
       System.out.printf("%s is done successfully!\n", extensionContext.getDisplayName());
     }

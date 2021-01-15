@@ -50,21 +50,27 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
             .ansi()
             .fgRed()
             .a("Class under test not found, very-very likely you have incorrectly set class path\n")
-            .a("or you have changed structure of the project so Zeus can not find the class below\n")
+            .a("or you have changed structure of the project ")
+            .a("so Zeus can not find the class below\n")
             .a("'")
             .a(cause.getMessage())
             .a("'")
             .reset());
       } else {
-        System.out.println(Ansi
+        var message = Ansi
             .ansi()
             .a(context.getDisplayName())
             .a(" - ")
             .fgRed()
             .a("BAD")
-            .a('\n')
-            .a(cause.getMessage())
-            .reset());
+            .a(System.lineSeparator());
+        if (cause instanceof NoSuchMethodError) {
+          message.a(String.format("'%s' is not exist, but should.", cause.getMessage()));
+        } else {
+          message.a(cause.getMessage());
+        }
+        message.a(System.lineSeparator()).reset();
+        System.out.println(message);
       }
     }
   }
@@ -76,6 +82,8 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
       System.out.printf("Successful: %d\n", successful);
       System.out.printf("Failed : %d\n", failed);
       System.out.print("------------------------------\n");
+    } else if (failed == 0) {
+      System.out.printf("%s is done successfully!\n", extensionContext.getDisplayName());
     }
     AnsiConsole.systemUninstall();
   }

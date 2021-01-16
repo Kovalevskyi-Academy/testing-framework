@@ -62,14 +62,13 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
             .a(context.getDisplayName())
             .a(" - ")
             .fgRed()
-            .a("BAD")
-            .a(System.lineSeparator());
+            .a("BAD\n\n");
         if (cause instanceof NoSuchMethodError) {
           message.a(String.format("'%s' is not exist, but should.", cause.getMessage()));
         } else {
           message.a(cause.getMessage());
         }
-        message.a(System.lineSeparator()).reset();
+        message.a("\n\n").reset();
         System.out.println(message);
       }
     }

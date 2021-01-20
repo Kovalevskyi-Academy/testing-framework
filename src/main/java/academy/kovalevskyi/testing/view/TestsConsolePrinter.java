@@ -1,5 +1,6 @@
 package academy.kovalevskyi.testing.view;
 
+import java.util.Objects;
 import java.util.StringJoiner;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
@@ -13,6 +14,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   private int successful = 0;
   private int failed = 0;
+  private String className;
   private boolean noClassDef;
   private static boolean silentMode;
 
@@ -23,8 +25,9 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
+    className = context.getDisplayName();
     if (!silentMode) {
-      System.out.println(getHeader(context));
+      System.out.println(getHeader());
     }
   }
 
@@ -39,7 +42,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   @Override
   public void testFailed(ExtensionContext context, Throwable cause) {
     if (silentMode && failed == 0) {
-      System.out.println(getHeader(context));
+      System.out.println(getHeader());
     }
     failed++;
     if (!noClassDef) {
@@ -50,20 +53,22 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   @Override
   public void afterAll(ExtensionContext context) {
     if (!silentMode) {
-      System.out.printf("TOTAL %d | SUCCESSFUL %d | FAILED %d%n%n",
+      var result = String.format("%nTOTAL %d | SUCCESSFUL %d | FAILED %d%n",
           successful + failed,
           successful,
           failed);
+      System.out.printf("%s%s%n%n", result, "-".repeat(result.length() - 4));
     } else if (failed == 0) {
       System.out.printf("%s is done successfully!%n", context.getDisplayName());
     } else {
-      System.out.printf("You have %d failed method(s)%n%n", failed);
+      var result = String.format("%nYou have %d failed method(s)%n", failed);
+      System.out.printf("%s%s%n", result, "-".repeat(result.length() - 4));
     }
     AnsiConsole.systemUninstall();
   }
 
-  private String getHeader(ExtensionContext context) {
-    return String.format("Result of %s:", context.getDisplayName());
+  private String getHeader() {
+    return String.format("Result of %s:%n", className);
   }
 
   private String getEntry(ExtensionContext context, String status, Color color) {
@@ -99,7 +104,10 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
     if (cause instanceof NoSuchMethodError) {
       message.format("'%s' is absent, write the method", cause.getMessage());
     } else {
-      message.a(cause.getMessage());
+      message.a(
+          Objects.requireNonNullElse(
+              cause.getMessage(),
+              String.format("by %s", cause.getClass().getName())));
     }
     result.add(message.reset().toString());
     return result.toString();

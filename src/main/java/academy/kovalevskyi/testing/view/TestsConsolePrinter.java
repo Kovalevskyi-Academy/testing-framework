@@ -102,7 +102,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
     result.add(getEntry(context, status, color));
     var message = Ansi.ansi().fg(color);
     if (cause instanceof NoSuchMethodError) {
-      message.format("'%s' is absent, write the method", cause.getMessage());
+      message.format("%s is absent in your jar file, write the method", cause.getMessage());
     } else {
       message.a(
           Objects.requireNonNullElse(

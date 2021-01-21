@@ -82,7 +82,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   }
 
   private String getEntry(ExtensionContext context, Throwable cause, String status, Color color) {
-    if (cause instanceof NoClassDefFoundError) {
+    if (Objects.equals(cause.getClass(), NoClassDefFoundError.class)) {
       noClassDef = true;
       return Ansi
           .ansi()
@@ -101,7 +101,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
     var result = new StringJoiner(System.lineSeparator());
     result.add(getEntry(context, status, color));
     var message = Ansi.ansi().fg(color);
-    if (cause instanceof NoSuchMethodError) {
+    if (Objects.equals(cause.getClass(), NoSuchMethodError.class)) {
       message.format("%s is absent in your jar file, write the method", cause.getMessage());
     } else {
       message.a(

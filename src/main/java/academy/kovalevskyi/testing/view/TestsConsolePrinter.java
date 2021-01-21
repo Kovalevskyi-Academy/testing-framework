@@ -92,7 +92,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
           .newline()
           .a("- your jar file is absent in the classpath")
           .newline()
-          .a("- class is absent")
+          .a("- class is absent in your jar file")
           .newline()
           .a("- structure of the project is not default")
           .reset()

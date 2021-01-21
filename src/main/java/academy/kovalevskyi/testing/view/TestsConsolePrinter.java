@@ -107,7 +107,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
       message.a(
           Objects.requireNonNullElse(
               cause.getMessage(),
-              String.format("by %s", cause.getClass().getName())));
+              String.format("by %s:%n- %s", cause, cause.getStackTrace()[0])));
     }
     result.add(message.reset().toString());
     return result.toString();

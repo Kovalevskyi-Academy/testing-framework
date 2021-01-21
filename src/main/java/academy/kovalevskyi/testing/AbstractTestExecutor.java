@@ -5,7 +5,6 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 import academy.kovalevskyi.testing.view.TestsConsolePrinter;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.launcher.Launcher;
-import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -16,10 +15,11 @@ public abstract class AbstractTestExecutor {
   private final SummaryGeneratingListener listener = new SummaryGeneratingListener();
 
   /**
-   * This method does ... what exactly?
+   * Execute test class programmatically.
    */
   public void executeTest() {
-    LauncherDiscoveryRequest request = LauncherDiscoveryRequestBuilder.request()
+    var request = LauncherDiscoveryRequestBuilder
+        .request()
         .selectors(selectClass(this.getClass()))
         .build();
     Launcher launcher = LauncherFactory.create();

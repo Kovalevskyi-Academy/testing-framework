@@ -57,7 +57,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
           successful + failed,
           successful,
           failed);
-      System.out.printf("%s%s%n%n", result, "-".repeat(result.length() - 4));
+      System.out.printf("%s%s%n", result, "-".repeat(result.length() - 4));
     } else if (failed == 0) {
       System.out.printf("%s is done successfully!%n", context.getDisplayName());
     } else {

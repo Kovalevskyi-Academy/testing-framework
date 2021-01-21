@@ -5,6 +5,7 @@ import java.util.StringJoiner;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
 import org.fusesource.jansi.AnsiConsole;
+import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -14,6 +15,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   private int successful = 0;
   private int failed = 0;
+  private int repetition = 0;
   private String className;
   private boolean noClassDef;
   private static boolean silentMode;
@@ -72,13 +74,20 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   }
 
   private String getEntry(ExtensionContext context, String status, Color color) {
-    return Ansi
-        .ansi()
-        .format("%s - ", context.getDisplayName())
-        .fg(color)
-        .a(status)
-        .reset()
-        .toString();
+    var method = String.format("%s()", context.getRequiredTestMethod().getName());
+    var annotation = context.getRequiredTestMethod().getAnnotation(RepeatedTest.class);
+    var result = Ansi.ansi();
+    if (Objects.isNull(annotation)) {
+      result.format("%s - ", method);
+      repetition = 0;
+    } else {
+      if (repetition == 0) {
+        result.format("%s repeated %d times:%n", method, annotation.value());
+      }
+      result.format("- repetition %d - ", ++repetition);
+    }
+    result.fg(color).a(status).reset();
+    return result.toString();
   }
 
   private String getEntry(ExtensionContext context, Throwable cause, String status, Color color) {

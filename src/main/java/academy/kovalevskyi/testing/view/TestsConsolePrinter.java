@@ -1,23 +1,30 @@
 package academy.kovalevskyi.testing.view;
 
+import academy.kovalevskyi.testing.AbstractTestExecutor;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
 import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 
-public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, AfterAllCallback {
+public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, AfterAllCallback,
+    BeforeEachCallback {
 
   private int successful = 0;
   private int failed = 0;
   private int repetition = 0;
   private long time;
+  private Timer timer;
   private String className;
   private boolean noClassDef;
   private static boolean silentMode;
@@ -37,7 +44,25 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   }
 
   @Override
+  public void beforeEach(ExtensionContext context) {
+    timer = new Timer(true);
+    timer.schedule(
+        new TimerTask() {
+
+          @Override
+          public void run() {
+            var error = "Looks like an infinity loop or your method is so slowly..";
+            var message = getEntry(context, new TimeoutException(error), "ABORTED", Color.RED);
+            System.out.println(message);
+            System.exit(-1);
+          }
+        },
+        TimeUnit.SECONDS.toMillis(AbstractTestExecutor.TEST_TIMEOUT_SEC));
+  }
+
+  @Override
   public void testSuccessful(ExtensionContext context) {
+    timer.cancel();
     successful++;
     if (!silentMode) {
       System.out.println(getEntry(context, "OK", Color.GREEN));
@@ -46,6 +71,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   @Override
   public void testFailed(ExtensionContext context, Throwable cause) {
+    timer.cancel();
     if (silentMode && failed == 0) {
       System.out.println(getHeader());
     }

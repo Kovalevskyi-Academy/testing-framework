@@ -11,7 +11,7 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 @ExtendWith(TestsConsolePrinter.class)
 public abstract class AbstractTestExecutor {
 
-  public static final int TEST_TIMEOUT_SEC = 10;
+  public static final int TEST_TIMEOUT_SEC = 5;
 
   /**
    * Launch JUnit 5 and execute test class programmatically.

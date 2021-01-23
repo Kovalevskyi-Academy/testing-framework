@@ -17,8 +17,14 @@ import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
 
+
+/**
+ * This class is called from the parallel universe for beautiful display of test results called from java code.
+ * NEED MORE DETAILS
+ */
 public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, AfterAllCallback,
     BeforeEachCallback {
+
 
   private int successful = 0;
   private int failed = 0;

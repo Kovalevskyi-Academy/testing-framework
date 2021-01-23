@@ -11,6 +11,14 @@ import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
+
+/**
+ * This class allows you to apply some settings and parameters globally for all tests.
+ * All tests directly or indirectly need to inherit from this class.
+ *
+ * @Timeout is used to define a global timeout for all tested classes.
+ * @ExtendWith — ??.
+ */
 @ExtendWith(TestsConsolePrinter.class)
 @Timeout(value = 10, unit = TimeUnit.SECONDS)
 public abstract class AbstractTestExecutor {

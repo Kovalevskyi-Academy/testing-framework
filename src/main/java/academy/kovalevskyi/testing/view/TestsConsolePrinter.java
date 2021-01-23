@@ -1,25 +1,36 @@
 package academy.kovalevskyi.testing.view;
 
+import academy.kovalevskyi.testing.AbstractTestExecutor;
 import java.util.Objects;
 import java.util.StringJoiner;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
 import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.TestWatcher;
+
 
 /**
  * This class is called from the parallel universe for beautiful display of test results called from java code.
  * NEED MORE DETAILS
  */
-public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, AfterAllCallback {
+public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, AfterAllCallback,
+    BeforeEachCallback {
+
 
   private int successful = 0;
   private int failed = 0;
   private int repetition = 0;
+  private long time;
+  private Timer timer;
   private String className;
   private boolean noClassDef;
   private static boolean silentMode;
@@ -31,6 +42,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
+    time = System.nanoTime();
     className = context.getDisplayName();
     if (!silentMode) {
       System.out.println(getHeader());
@@ -38,7 +50,25 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   }
 
   @Override
+  public void beforeEach(ExtensionContext context) {
+    timer = new Timer(true);
+    timer.schedule(
+        new TimerTask() {
+
+          @Override
+          public void run() {
+            var error = "Looks like an infinity loop or your method is so slowly..";
+            var message = getEntry(context, new TimeoutException(error), "ABORTED", Color.RED);
+            System.out.println(message);
+            System.exit(-1);
+          }
+        },
+        TimeUnit.SECONDS.toMillis(AbstractTestExecutor.TEST_TIMEOUT_SEC));
+  }
+
+  @Override
   public void testSuccessful(ExtensionContext context) {
+    timer.cancel();
     successful++;
     if (!silentMode) {
       System.out.println(getEntry(context, "OK", Color.GREEN));
@@ -47,6 +77,7 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   @Override
   public void testFailed(ExtensionContext context, Throwable cause) {
+    timer.cancel();
     if (silentMode && failed == 0) {
       System.out.println(getHeader());
     }
@@ -58,19 +89,28 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   @Override
   public void afterAll(ExtensionContext context) {
+    var ms = calculateDurationMillisTime(time);
     if (!silentMode) {
-      var result = String.format("%nTOTAL %d | SUCCESSFUL %d | FAILED %d%n",
+      var result = String.format("%nTOTAL %d | SUCCESSFUL %d | FAILED %d | TIME %d ms%n",
           successful + failed,
           successful,
-          failed);
+          failed,
+          ms);
       System.out.printf("%s%s%n", result, "-".repeat(result.length() - 4));
     } else if (failed == 0) {
-      System.out.printf("%s is done successfully!%n", context.getDisplayName());
+      System.out.printf("%s is done successfully in %d ms!%n", context.getDisplayName(), ms);
     } else {
-      var result = String.format("%nYou have %d failed method(s)%n", failed);
+      var result = String.format("%nYou have %d failed method(s), done in %d ms%n", failed, ms);
       System.out.printf("%s%s%n", result, "-".repeat(result.length() - 4));
     }
     AnsiConsole.systemUninstall();
+  }
+
+  private long calculateDurationMillisTime(long beginNanos) {
+    if (System.nanoTime() < beginNanos) {
+      throw new IllegalArgumentException("End time less start time");
+    }
+    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - beginNanos);
   }
 
   private String getHeader() {

@@ -6,7 +6,6 @@ import academy.kovalevskyi.testing.view.TestsConsolePrinter;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.platform.launcher.Launcher;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
 import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
@@ -23,18 +22,19 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 @Timeout(value = 10, unit = TimeUnit.SECONDS)
 public abstract class AbstractTestExecutor {
 
-  private final SummaryGeneratingListener listener = new SummaryGeneratingListener();
+  public static final int TEST_TIMEOUT_SEC = 5;
 
 
   /**
-   * Execute test class programmatically.
+   * Launch JUnit 5 and execute test class programmatically.
    */
   public void executeTest() {
+    var listener = new SummaryGeneratingListener();
     var request = LauncherDiscoveryRequestBuilder
         .request()
         .selectors(selectClass(this.getClass()))
         .build();
-    Launcher launcher = LauncherFactory.create();
+    var launcher = LauncherFactory.create();
     launcher.discover(request);
     launcher.registerTestExecutionListeners(listener);
     launcher.execute(request);

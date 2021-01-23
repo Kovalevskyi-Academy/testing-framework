@@ -3,8 +3,6 @@ package academy.kovalevskyi.testing;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 import academy.kovalevskyi.testing.view.TestsConsolePrinter;
-import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.Timeout;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -15,14 +13,13 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
  * This class allows you to apply some settings and parameters globally for all tests.
  * All tests directly or indirectly need to inherit from this class.
  *
- * @Timeout is used to define a global timeout for all tested classes.
  * @ExtendWith — ??.
  */
 @ExtendWith(TestsConsolePrinter.class)
-@Timeout(value = 10, unit = TimeUnit.SECONDS)
+// @Timeout(value = 5, unit = TimeUnit.SECONDS)
 public abstract class AbstractTestExecutor {
 
-  public static final int TEST_TIMEOUT_SEC = 5;
+  public static final int TEST_TIMEOUT_SEC = 20;
 
 
   /**

@@ -14,6 +14,7 @@ import org.fusesource.jansi.Ansi.Color;
 import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.RepeatedTest;
 import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -25,7 +26,7 @@ import org.junit.jupiter.api.extension.TestWatcher;
  * java code. NEED MORE DETAILS
  */
 public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, AfterAllCallback,
-    BeforeEachCallback {
+    BeforeEachCallback, AfterEachCallback {
 
 
   private int successful = 0;
@@ -69,8 +70,12 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
   }
 
   @Override
-  public void testSuccessful(ExtensionContext context) {
+  public void afterEach(ExtensionContext context) {
     timer.cancel();
+  }
+
+  @Override
+  public void testSuccessful(ExtensionContext context) {
     successful++;
     if (!silentMode) {
       System.out.println(getEntry(context, "OK", Color.GREEN));
@@ -79,7 +84,6 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   @Override
   public void testFailed(ExtensionContext context, Throwable cause) {
-    timer.cancel();
     if (silentMode && failed == 0) {
       System.out.println(getHeader());
     }
@@ -121,16 +125,18 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
 
   private String getEntry(ExtensionContext context, String status, Color color) {
     var method = String.format("%s()", context.getRequiredTestMethod().getName());
-    var annotation = context.getRequiredTestMethod().getAnnotation(RepeatedTest.class);
+    var repeatedTest = context.getRequiredTestMethod().getAnnotation(RepeatedTest.class);
     var result = Ansi.ansi();
-    if (Objects.isNull(annotation)) {
+    if (Objects.isNull(repeatedTest)) {
       result.format("%s - ", method);
-      repetition = 0;
     } else {
       if (repetition == 0) {
-        result.format("%s repeated %d times:%n", method, annotation.value());
+        result.format("%s repeated %d times:%n", method, repeatedTest.value());
       }
-      result.format("- repetition %d - ", ++repetition);
+      result.format("• repetition %d - ", ++repetition);
+      if (repeatedTest.value() == repetition) {
+        repetition = 0;
+      }
     }
     result.fg(color).a(status).reset();
     return result.toString();

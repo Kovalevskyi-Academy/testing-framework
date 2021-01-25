@@ -1,6 +1,8 @@
 package academy.kovalevskyi.testing.view;
 
 import academy.kovalevskyi.testing.AbstractTestExecutor;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.Timer;
@@ -19,8 +21,8 @@ import org.junit.jupiter.api.extension.TestWatcher;
 
 
 /**
- * This class is called from the parallel universe for beautiful display of test results called from java code.
- * NEED MORE DETAILS
+ * This class is called from the parallel universe for beautiful display of test results called from
+ * java code. NEED MORE DETAILS
  */
 public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, AfterAllCallback,
     BeforeEachCallback {
@@ -157,13 +159,19 @@ public class TestsConsolePrinter implements TestWatcher, BeforeAllCallback, Afte
     if (Objects.equals(cause.getClass(), NoSuchMethodError.class)) {
       message.format("%s is absent in your jar file, write the method", cause.getMessage());
     } else {
-      message.a(
-          Objects.requireNonNullElse(
-              cause.getMessage(),
-              String.format("by %s:%n- %s", cause, cause.getStackTrace()[0])));
+      message.a(getReasonOrStacktrace(cause));
     }
     result.add(message.reset().toString());
     return result.toString();
   }
 
+  private String getReasonOrStacktrace(Throwable cause) {
+    var reason = cause.getMessage();
+    if (Objects.isNull(reason)) {
+      var stacktrace = new ByteArrayOutputStream();
+      cause.printStackTrace(new PrintStream(stacktrace));
+      return stacktrace.toString().trim();
+    }
+    return reason;
+  }
 }

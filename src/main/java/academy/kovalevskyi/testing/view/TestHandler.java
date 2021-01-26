@@ -173,7 +173,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
       if (repetition == 0) {
         result.format("%s repeated %d times:%n", method, repeatedTest.value());
       }
-      result.format("• repetition %d - ", ++repetition);
+      result.format("> repetition %d - ", ++repetition);
       if (repeatedTest.value() == repetition) {
         repetition = 0;
       }

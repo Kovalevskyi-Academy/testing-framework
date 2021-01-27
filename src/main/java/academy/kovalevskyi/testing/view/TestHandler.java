@@ -1,7 +1,5 @@
 package academy.kovalevskyi.testing.view;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
 import java.util.Objects;
 import java.util.StringJoiner;
 import java.util.Timer;
@@ -202,16 +200,18 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     if (Objects.equals(cause.getClass(), NoSuchMethodError.class)) {
       message.format("%s is absent in your jar file, write the method", cause.getMessage());
     } else {
-      message.a(prepareStacktrace(cause));
+      message.a(prepareReason(cause));
     }
     result.add(message.reset().toString());
     return result.toString();
   }
 
-  private String prepareStacktrace(final Throwable cause) {
-    final var stacktrace = new ByteArrayOutputStream();
-    cause.printStackTrace(new PrintStream(stacktrace));
-    return stacktrace.toString().trim();
+  private String prepareReason(final Throwable cause) {
+    return Objects.requireNonNullElse(
+        cause.getMessage(),
+        String.format("by %s%nat %s",
+            cause.getClass().getName(),
+            cause.getStackTrace()[0].toString()));
   }
 
   private TimerTask createTimer(final ExtensionContext context) {

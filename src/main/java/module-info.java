@@ -1,7 +1,10 @@
 module academy.kovalevskyi.testing {
+
   exports academy.kovalevskyi.testing;
+  exports academy.kovalevskyi.testing.util;
   exports academy.kovalevskyi.testing.view;
   exports academy.kovalevskyi.testing.common;
+  exports academy.kovalevskyi.testing.annotation;
 
   requires org.junit.jupiter.api;
   requires org.junit.jupiter.engine;
@@ -9,7 +12,7 @@ module academy.kovalevskyi.testing {
   requires org.junit.vintage.engine;
   requires org.junit.platform.launcher;
   requires org.mockito;
-  requires com.google.common;
-  requires truth;
   requires org.fusesource.jansi;
+  requires truth;
+  requires reflections;
 }

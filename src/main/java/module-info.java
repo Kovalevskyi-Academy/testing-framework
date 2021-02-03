@@ -13,6 +13,6 @@ module academy.kovalevskyi.testing {
   requires org.junit.platform.launcher;
   requires org.mockito;
   requires org.fusesource.jansi;
-  requires truth;
+  requires com.google.common;
   requires reflections;
 }

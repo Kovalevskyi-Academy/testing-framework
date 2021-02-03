@@ -3,7 +3,7 @@ package academy.kovalevskyi.testing.view;
 import org.fusesource.jansi.Ansi.Color;
 
 /**
- * Set of states of a test
+ * Set of states of a test.
  */
 public enum State {
 

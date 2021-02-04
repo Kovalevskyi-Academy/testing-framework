@@ -6,6 +6,7 @@ import academy.kovalevskyi.testing.annotation.ICourseProvider;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -41,33 +42,45 @@ public class CourseManager {
    *
    * @param course course id
    * @return list of classes of containers
+   * @throws java.util.NoSuchElementException if containers are absent
    */
   public static List<Class<? extends AbstractTestExecutor>> getContainersBy(final int course) {
-    return getCourse(course).collect(Collectors.toUnmodifiableList());
+    var result = getCourse(course).collect(Collectors.toUnmodifiableList());
+    if (result.isEmpty()) {
+      var template = "Containers with course-%d are not found!";
+      throw new NoSuchElementException(String.format(template, course));
+    }
+    return result;
   }
 
   /**
-   * Provides all containers by course id/week/day.
+   * Provides all containers by course/week/day.
    *
    * @param course course id
    * @param week   week number
    * @param day    day number
    * @return list of classes of containers
+   * @throws java.util.NoSuchElementException if containers are absent
    */
   public static List<Class<? extends AbstractTestExecutor>> getContainersBy(
       final int course,
       final int week,
       final int day) {
-    return getCourse(course)
+    var result = getCourse(course)
         .filter(clazz -> {
           final var annotation = clazz.getAnnotation(Container.class);
           return annotation.week() == week && annotation.day() == day;
         })
         .collect(Collectors.toUnmodifiableList());
+    if (result.isEmpty()) {
+      var template = "Containers with course-%d week-%d day-%d are not found!";
+      throw new NoSuchElementException(String.format(template, course, week, day));
+    }
+    return result;
   }
 
   /**
-   * Provides all containers by course id/week/day/container.
+   * Provides container by course/week/day/id.
    *
    * @param course    course id
    * @param week      week number
@@ -88,7 +101,10 @@ public class CourseManager {
               && annotation.day() == day
               && annotation.id() == container;
         })
-        .findFirst().orElseThrow();
+        .findFirst().orElseThrow(() -> {
+          var template = "Container with course-%d week-%d day-%d id-%d is not found!";
+          return new NoSuchElementException(String.format(template, course, week, day, container));
+        });
   }
 
   private static Stream<Class<? extends AbstractTestExecutor>> getCourse(final int id) {

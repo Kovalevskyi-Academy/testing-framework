@@ -13,15 +13,17 @@ import java.util.stream.Stream;
 import org.reflections.Reflections;
 
 /**
- * Provides all available courses from package {@value TEST_CLASSES_PACKAGE}.
+ * Provides all available courses from packages {@value JAVADEEPDIVE_PACKAGE,CODINGBOOTCAMP_PACKAGE}.
  */
 public class CourseManager {
 
   private static final Set<Class<? extends AbstractTestExecutor>> TEST_CLASSES;
-  private static final String TEST_CLASSES_PACKAGE = "academy.kovalevskyi.course"; // TODO change base package for all courses to 'academy.kovalevskyi.course'
+  private static final String JAVADEEPDIVE_PACKAGE = "academy.kovalevskyi.javadeepdive"; // TODO change base package for all courses to 'academy.kovalevskyi.course'
+  private static final String CODINGBOOTCAMP_PACKAGE = "com.kovalevskyi.academy.codingbootcamp"; // TODO remove it before starring new groups in MARCH
 
   static {
-    TEST_CLASSES = new Reflections(TEST_CLASSES_PACKAGE).getSubTypesOf(AbstractTestExecutor.class);
+    var reflections = new Reflections(JAVADEEPDIVE_PACKAGE, CODINGBOOTCAMP_PACKAGE);
+    TEST_CLASSES = reflections.getSubTypesOf(AbstractTestExecutor.class);
   }
 
   /**
@@ -33,8 +35,13 @@ public class CourseManager {
         .stream()
         .filter(entry -> !entry.isAnnotationPresent(Container.class))
         .map(Class::getName)
+        .filter(name -> !name.contains("BasicStdTest")) // TODO remove after changing base package
         .sorted()
         .forEach(System.out::println);
+  }
+
+  public static void main(String[] args) {
+    printNotAnnotatedClasses();
   }
 
   /**

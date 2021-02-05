@@ -40,10 +40,6 @@ public class CourseManager {
         .forEach(System.out::println);
   }
 
-  public static void main(String[] args) {
-    printNotAnnotatedClasses();
-  }
-
   /**
    * Provides all containers by course id.
    *

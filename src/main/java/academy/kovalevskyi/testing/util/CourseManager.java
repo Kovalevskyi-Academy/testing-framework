@@ -13,16 +13,16 @@ import java.util.stream.Stream;
 import org.reflections.Reflections;
 
 /**
- * Provides all available courses from packages {@value JAVADEEPDIVE_PACKAGE,CODINGBOOTCAMP_PACKAGE}.
+ * Provides all available courses from packages {@value FIRST_PACKAGE,SECOND_PACKAGE}.
  */
 public class CourseManager {
 
   private static final Set<Class<? extends AbstractTestExecutor>> TEST_CLASSES;
-  private static final String JAVADEEPDIVE_PACKAGE = "academy.kovalevskyi.javadeepdive"; // TODO change base package for all courses to 'academy.kovalevskyi.course'
-  private static final String CODINGBOOTCAMP_PACKAGE = "com.kovalevskyi.academy.codingbootcamp"; // TODO remove it before starring new groups in MARCH
+  private static final String FIRST_PACKAGE = "academy.kovalevskyi"; // TODO change base package for all courses to 'academy.kovalevskyi.course'
+  private static final String SECOND_PACKAGE = "com.kovalevskyi.academy"; // TODO remove it before starring new groups in MARCH
 
   static {
-    var reflections = new Reflections(JAVADEEPDIVE_PACKAGE, CODINGBOOTCAMP_PACKAGE);
+    var reflections = new Reflections(FIRST_PACKAGE, SECOND_PACKAGE);
     TEST_CLASSES = reflections.getSubTypesOf(AbstractTestExecutor.class);
   }
 

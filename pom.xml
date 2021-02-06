@@ -70,10 +70,11 @@
               <goal>single</goal>
             </goals>
             <configuration>
-              <outputDirectory>target</outputDirectory>
               <finalName>${project.artifactId}</finalName>
+              <outputDirectory>${project.build.directory}</outputDirectory>
+              <appendAssemblyId>false</appendAssemblyId>
               <descriptors>
-                <descriptor>assembly.xml</descriptor>
+                <descriptor>${project.basedir}/src/assembly/assembly.xml</descriptor>
               </descriptors>
             </configuration>
           </execution>

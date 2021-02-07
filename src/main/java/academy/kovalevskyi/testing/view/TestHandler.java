@@ -152,10 +152,8 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     }
     final var clazz = cause.getClass();
     if (clazz.equals(NoClassDefFoundError.class)) {
-      if (!noClassDef) {
-        noClassDef = true;
-        printEntry(State.NO_CLASS, cause);
-      }
+      printEntry(State.NO_CLASS, cause);
+      noClassDef = true;
     } else if (clazz.equals(NoSuchMethodError.class)) {
       printEntry(State.NO_METHOD, cause);
     } else {
@@ -188,50 +186,56 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   }
 
   private void printEntry(final State state) {
-    if (errorMode) {
-      var errors = failed + aborted;
-      if (errors == 1 && (state != State.SUCCESSFUL && state != State.RUNNING)) {
-        printHeader();
-      }
-      if (errors == 0) {
-        System.out.printf("\r%s -> %s", containerName, testName);
+    if (!noClassDef) {
+      if (errorMode) {
+        var errors = failed + aborted;
+        if (errors == 1 && (state != State.SUCCESSFUL && state != State.RUNNING)) {
+          printHeader();
+        }
+        if (errors == 0) {
+          System.out.printf("\r%s -> %s", containerName, testName);
+        } else {
+          System.out.printf("\r%s", testName);
+        }
       } else {
         System.out.printf("\r%s", testName);
       }
-    } else {
-      System.out.printf("\r%s", testName);
-    }
-    if (repeatedTest) {
-      repeatedTestSummary = prepareSummary(
-          testName,
-          state,
-          failedRepeatedTestInvocations,
-          repeatedTestInvocations);
-      System.out.printf(" test %d", repeatedTestInvocations);
-    }
-    var status = prepareStatus(state);
-    if (state == State.RUNNING) {
-      System.out.print(status);
-    } else if (state == State.FAILED || state == State.INTERRUPTED || (!repeatedTest
-        && (state == State.ABORTED || state == State.NO_METHOD
-        || (!errorMode && state == State.SUCCESSFUL)))) {
-      System.out.println(status);
+      if (repeatedTest) {
+        repeatedTestSummary = prepareSummary(
+            testName,
+            state,
+            failedRepeatedTestInvocations,
+            repeatedTestInvocations);
+        System.out.printf(" test %d", repeatedTestInvocations);
+      }
+      var status = prepareStatus(state);
+      if (state == State.RUNNING) {
+        System.out.print(status);
+      } else if (state == State.FAILED || state == State.INTERRUPTED || (!repeatedTest
+          && (state == State.ABORTED || state == State.NO_METHOD
+          || (!errorMode && state == State.SUCCESSFUL)))) {
+        System.out.println(status);
+      }
     }
   }
 
   private void printEntry(final State state, final Throwable cause) {
-    printEntry(state);
-    if (repeatedTest && (state == State.NO_METHOD || state == State.ABORTED)) {
-      repeatedTestSummary += String.format("%n%s", prepareReason(state, cause));
-    } else {
-      System.out.println(prepareReason(state, cause));
+    if (!noClassDef) {
+      printEntry(state);
+      if (repeatedTest && (state == State.NO_METHOD || state == State.ABORTED)) {
+        repeatedTestSummary += String.format("%n%s", prepareReason(state, cause));
+      } else {
+        System.out.println(prepareReason(state, cause));
+      }
     }
   }
 
   private void printSummary() {
-    final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
-    if (!noClassDef && repeatedTest && successful != 0 && (!errorMode || abortedRepeatedTest)) {
-      System.out.println(repeatedTestSummary);
+    if (!noClassDef) {
+      final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
+      if (repeatedTest && successful != 0 && (!errorMode || abortedRepeatedTest)) {
+        System.out.println(repeatedTestSummary);
+      }
     }
   }
 

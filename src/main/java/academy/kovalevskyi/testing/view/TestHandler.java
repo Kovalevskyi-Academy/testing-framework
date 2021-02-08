@@ -1,5 +1,7 @@
 package academy.kovalevskyi.testing.view;
 
+import java.io.OutputStream;
+import java.io.PrintStream;
 import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -33,6 +35,8 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   private String containerName;
   private String testName;
   private String repeatedTestSummary;
+  private PrintStream defaultPrintStream;
+  private PrintStream gagPrintStream;
   private boolean repeatedTest;
   private boolean abortedRepeatedTest;
   private boolean noClassDef;
@@ -56,6 +60,8 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
     containerName = context.getDisplayName();
+    defaultPrintStream = System.out;
+    gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
     if (!errorMode) {
       printHeader();
     }
@@ -98,6 +104,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     timer.schedule(createTimer(), 15_000);
     testName = String.format("%s()", context.getRequiredTestMethod().getName());
     printEntry(State.RUNNING);
+    System.setOut(gagPrintStream);
     beginning = System.currentTimeMillis();
   }
 
@@ -110,6 +117,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   public void afterEach(ExtensionContext context) {
     time += System.currentTimeMillis() - beginning;
     timer.cancel();
+    System.setOut(defaultPrintStream);
   }
 
   /**
@@ -294,7 +302,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     return String.format("%s%n%s", text, "-".repeat(text.trim().length()));
   }
 
-  private String prepareReason(final State state, final Throwable cause) {
+  public static String prepareReason(final State state, final Throwable cause) {
     final var result = Ansi.ansi().fg(state.color);
     if (cause instanceof AssertionError || cause.getClass().equals(TestAbortedException.class)) {
       result.a(cause.getMessage());

@@ -7,7 +7,7 @@ import org.fusesource.jansi.Ansi.Color;
  */
 public enum State {
 
-  SUCCESSFUL("OK", Color.GREEN),
+  SUCCESSFUL("OK ", Color.GREEN),
   FAILED("BAD", Color.RED),
   ABORTED("NONE", Color.YELLOW),
   RUNNING("RUN", Color.BLUE),

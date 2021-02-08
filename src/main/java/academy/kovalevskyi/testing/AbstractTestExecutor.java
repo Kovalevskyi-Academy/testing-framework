@@ -2,11 +2,14 @@ package academy.kovalevskyi.testing;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
+import academy.kovalevskyi.testing.view.State;
 import academy.kovalevskyi.testing.view.TestHandler;
+import java.util.Objects;
+import java.util.stream.Stream;
+import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
-import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 
 /**
  * This class allows you to invoke test classes programmatically. All test classes directly or
@@ -17,17 +20,26 @@ import org.junit.platform.launcher.listeners.SummaryGeneratingListener;
 public abstract class AbstractTestExecutor {
 
   /**
-   * Launch JUnit 5 and invoke test class programmatically.
+   * * Launch JUnit 5 and invoke test class programmatically.
+   *
+   * @throws Exception a lot of reasons
    */
-  public void execute() {
-    final var listener = new SummaryGeneratingListener();
+  public void execute() throws Exception {
     final var request = LauncherDiscoveryRequestBuilder
         .request()
         .selectors(selectClass(this.getClass()))
         .build();
-    final var launcher = LauncherFactory.create();
-    launcher.discover(request);
-    launcher.registerTestExecutionListeners(listener);
-    launcher.execute(request);
+    try {
+      LauncherFactory.create().execute(request);
+    } catch (Exception exception) {
+      final var noClassException = Stream
+          .iterate(exception, Objects::nonNull, Throwable::getCause)
+          .filter(throwable -> throwable.getClass().equals(NoClassDefFoundError.class))
+          .findFirst()
+          .orElseThrow(() -> exception);
+      AnsiConsole.systemInstall();
+      System.out.println(TestHandler.prepareReason(State.NO_CLASS, noClassException));
+      AnsiConsole.systemUninstall();
+    }
   }
 }

@@ -36,6 +36,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   private String testName;
   private String repeatedTestSummary;
   private PrintStream defaultPrintStream;
+  private PrintStream defaultErrorPrintStream;
   private PrintStream gagPrintStream;
   private boolean repeatedTest;
   private boolean abortedRepeatedTest;
@@ -61,6 +62,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     AnsiConsole.systemInstall();
     containerName = context.getDisplayName();
     defaultPrintStream = System.out;
+    defaultErrorPrintStream = System.err;
     gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
     if (!errorMode) {
       printHeader();
@@ -105,6 +107,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     testName = String.format("%s()", context.getRequiredTestMethod().getName());
     printEntry(State.RUNNING);
     System.setOut(gagPrintStream);
+    System.setErr(gagPrintStream);
     beginning = System.currentTimeMillis();
   }
 
@@ -118,6 +121,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     time += System.currentTimeMillis() - beginning;
     timer.cancel();
     System.setOut(defaultPrintStream);
+    System.setErr(defaultErrorPrintStream);
   }
 
   /**

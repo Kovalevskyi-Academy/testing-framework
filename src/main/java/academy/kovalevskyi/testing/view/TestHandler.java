@@ -106,8 +106,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     timer.schedule(createTimer(), 15_000);
     testName = String.format("%s()", context.getRequiredTestMethod().getName());
     printEntry(State.RUNNING);
-    System.setOut(gagPrintStream);
-    System.setErr(gagPrintStream);
+    disableConsolePrints();
     beginning = System.currentTimeMillis();
   }
 
@@ -120,8 +119,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   public void afterEach(ExtensionContext context) {
     time += System.currentTimeMillis() - beginning;
     timer.cancel();
-    System.setOut(defaultPrintStream);
-    System.setErr(defaultErrorPrintStream);
+    enableConsolePrints();
   }
 
   /**
@@ -191,6 +189,16 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
           prepareDuration());
     }
     AnsiConsole.systemUninstall();
+  }
+
+  private void enableConsolePrints() {
+    System.setOut(defaultPrintStream);
+    System.setErr(defaultErrorPrintStream);
+  }
+
+  private void disableConsolePrints() {
+    System.setOut(gagPrintStream);
+    System.setErr(gagPrintStream);
   }
 
   private void printHeader() {
@@ -337,6 +345,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
 
       @Override
       public void run() {
+        enableConsolePrints();
         printEntry(State.INTERRUPTED, new TimeoutException());
         System.exit(0);
       }

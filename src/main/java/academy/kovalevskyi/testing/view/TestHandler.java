@@ -317,7 +317,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   public static String prepareReason(final State state, final Throwable cause) {
     final var result = Ansi.ansi().fg(state.color);
     if (cause instanceof AssertionError || cause.getClass().equals(TestAbortedException.class)) {
-      result.a(cause.getMessage());
+      result.a(cause.getMessage().trim());
     } else if (state == State.NO_CLASS) {
       result
           .format("\rZeus can not find '%s'%n", cause.getMessage())
@@ -333,7 +333,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
       result.format("Thrown unexpected %s", cause.getClass().getName());
       var message = cause.getMessage();
       if (message != null) {
-        result.format(": %s", message);
+        result.format(": %s", message.trim());
       }
       result.format("%nat %s", cause.getStackTrace()[0].toString());
     }

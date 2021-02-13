@@ -2,7 +2,6 @@ package academy.kovalevskyi.testing;
 
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
-import academy.kovalevskyi.testing.view.State;
 import academy.kovalevskyi.testing.view.TestHandler;
 import java.util.Objects;
 import java.util.stream.Stream;
@@ -38,7 +37,7 @@ public abstract class AbstractTestExecutor {
           .findFirst()
           .orElseThrow(() -> exception);
       AnsiConsole.systemInstall();
-      System.out.println(TestHandler.prepareReason(State.NO_CLASS, noClassException));
+      System.out.println(TestHandler.getReason((NoClassDefFoundError) noClassException));
       AnsiConsole.systemUninstall();
     }
   }

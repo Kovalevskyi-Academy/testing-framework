@@ -3,13 +3,16 @@ package academy.kovalevskyi.testing.util;
 import academy.kovalevskyi.testing.AbstractTestExecutor;
 import academy.kovalevskyi.testing.annotation.Container;
 import academy.kovalevskyi.testing.annotation.ICourseProvider;
+import academy.kovalevskyi.testing.common.BasicStdTest;
+import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
+import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
+import academy.kovalevskyi.testing.service.IRequest;
+import academy.kovalevskyi.testing.service.ContainerComparator;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Comparator;
 import java.util.List;
-import java.util.NoSuchElementException;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import org.reflections.Reflections;
 
 /**
@@ -17,115 +20,101 @@ import org.reflections.Reflections;
  */
 public class CourseManager {
 
-  private static final Set<Class<? extends AbstractTestExecutor>> TEST_CLASSES;
-  private static final String FIRST_PACKAGE = "academy.kovalevskyi"; // TODO change base package for all courses to 'academy.kovalevskyi.course'
-  private static final String SECOND_PACKAGE = "com.kovalevskyi.academy"; // TODO remove it before starring new groups in MARCH
+  private static final Set<Class<? extends AbstractTestExecutor>> CONTAINERS;
+
+  // TODO change base package for all courses to 'academy.kovalevskyi.course'
+  private static final String FIRST_PACKAGE = "academy.kovalevskyi.javadeepdive";
+  private static final String SECOND_PACKAGE = "com.kovalevskyi.academy.codingbootcamp";
 
   static {
     var reflections = new Reflections(FIRST_PACKAGE, SECOND_PACKAGE);
-    TEST_CLASSES = reflections.getSubTypesOf(AbstractTestExecutor.class);
-  }
-
-  /**
-   * For service goals only. Prints classes which are not annotated with @CourseManager to find and
-   * fix bugs before packaging a project. Best practice it is using it in main() method ;)
-   */
-  public static void printNotAnnotatedClasses() {
-    TEST_CLASSES
+    CONTAINERS = new TreeSet<>(new ContainerComparator());
+    // TODO after changing base package for courses code below should be deleted
+    // to remove BasicStdTest class from list to fix an error (temporary solution)
+    var tmp = reflections
+        .getSubTypesOf(AbstractTestExecutor.class)
         .stream()
-        .filter(entry -> !entry.isAnnotationPresent(Container.class))
-        .map(Class::getName)
-        .filter(name -> !name.contains("BasicStdTest")) // TODO remove after changing base package
-        .sorted()
-        .forEach(System.out::println);
+        .filter(clazz -> !clazz.equals(BasicStdTest.class))
+        .collect(Collectors.toSet());
+    CONTAINERS.addAll(tmp);
   }
 
   /**
-   * Provides all containers by course id.
+   * Provides all available containers.
    *
-   * @param course course id
    * @return list of classes of containers
-   * @throws java.util.NoSuchElementException if containers are absent
+   * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<? extends AbstractTestExecutor>> getContainersBy(final int course) {
-    var result = getCourse(course).collect(Collectors.toUnmodifiableList());
+  public static List<Class<? extends AbstractTestExecutor>> getContainers() {
+    final var result = CONTAINERS.stream().collect(Collectors.toUnmodifiableList());
+
     if (result.isEmpty()) {
-      var template = "Containers with course-%d are not found!";
-      throw new NoSuchElementException(String.format(template, course));
+      throw new ContainerNotFoundException("Container's list is empty");
     }
+
     return result;
   }
 
   /**
-   * Provides all containers by course/week/day.
+   * Provides containers by request.
    *
-   * @param course course id
-   * @param week   week number
-   * @param day    day number
+   * @param request combined request
    * @return list of classes of containers
-   * @throws java.util.NoSuchElementException if containers are absent
+   * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<? extends AbstractTestExecutor>> getContainersBy(
-      final int course,
-      final int week,
-      final int day) {
-    var result = getCourse(course)
-        .filter(clazz -> {
-          final var annotation = clazz.getAnnotation(Container.class);
-          return annotation.week() == week && annotation.day() == day;
-        })
+  public static List<Class<? extends AbstractTestExecutor>> getContainers(final IRequest request) {
+    final var result = CONTAINERS
+        .stream()
+        .filter(request.getPredicate())
         .collect(Collectors.toUnmodifiableList());
+
     if (result.isEmpty()) {
-      var template = "Containers with course-%d week-%d day-%d are not found!";
-      throw new NoSuchElementException(String.format(template, course, week, day));
+      throw new ContainerNotFoundException("Containers are not found by your request");
     }
+
     return result;
   }
 
   /**
-   * Provides container by course/week/day/id.
+   * Extracts an instance of ICourseProvider implementation from class witch is annotated with
+   * Container annotation.
    *
-   * @param course    course id
-   * @param week      week number
-   * @param day       day number
-   * @param container container id
-   * @return list of classes of containers
-   * @throws java.util.NoSuchElementException if container is absent
+   * @param clazz AbstractTestExecutor heir class
+   * @return instance of ICourseProvider
+   * @throws ExceptionInInitializerError some edge situations
    */
-  public static Class<? extends AbstractTestExecutor> getContainerBy(
-      final int course,
-      final int week,
-      final int day,
-      final int container) {
-    return getCourse(course)
-        .filter(clazz -> {
-          final var annotation = clazz.getAnnotation(Container.class);
-          return annotation.week() == week
-              && annotation.day() == day
-              && annotation.id() == container;
-        })
-        .findFirst().orElseThrow(() -> {
-          var template = "Container with course-%d week-%d day-%d id-%d is not found!";
-          return new NoSuchElementException(String.format(template, course, week, day, container));
-        });
+  public static ICourseProvider initProvider(final Class<? extends AbstractTestExecutor> clazz) {
+    return initProvider(getAnnotation(clazz));
   }
 
-  private static Stream<Class<? extends AbstractTestExecutor>> getCourse(final int id) {
-    return TEST_CLASSES
-        .stream()
-        .filter(clazz -> clazz.isAnnotationPresent(Container.class))
-        .filter(clazz -> initProvider(clazz.getAnnotation(Container.class)).id() == id)
-        .sorted(Comparator
-            .comparingInt((Class<?> clazz) -> clazz.getAnnotation(Container.class).week())
-            .thenComparingInt(clazz -> clazz.getAnnotation(Container.class).day())
-            .thenComparingInt(clazz -> clazz.getAnnotation(Container.class).id()));
-  }
-
-  private static ICourseProvider initProvider(Container manager) {
+  /**
+   * Extracts an instance of ICourseProvider implementation from class witch is annotated with
+   * Container annotation.
+   *
+   * @param annotation Container instance
+   * @return instance of ICourseProvider
+   * @throws ExceptionInInitializerError some edge situations
+   */
+  public static ICourseProvider initProvider(final Container annotation) {
     try {
-      return (ICourseProvider) manager.course().getConstructors()[0].newInstance();
+      return (ICourseProvider) annotation.course().getConstructors()[0].newInstance();
     } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
       throw new ExceptionInInitializerError(e.getMessage());
     }
+  }
+
+  /**
+   * Extracts a Container instance from class witch is annotated with Container annotation.
+   *
+   * @param clazz any heir of AbstractTestExecutor class
+   * @return Container instance
+   * @throws NotAnnotatedContainerException if class is not annotated with @Container
+   */
+  public static Container getAnnotation(final Class<? extends AbstractTestExecutor> clazz) {
+    if (!clazz.isAnnotationPresent(Container.class)) {
+      var message = String.format("%s is not annotated with @Container", clazz.getName());
+      throw new NotAnnotatedContainerException(message);
+    }
+    return clazz.getAnnotation(Container.class);
   }
 }

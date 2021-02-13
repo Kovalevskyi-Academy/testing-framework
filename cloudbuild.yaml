@@ -5,14 +5,5 @@ steps:
     args: ['checkout', '$COMMIT_SHA']
     dir: 'testing-framework'
   - name: 'maven:3.6.3-openjdk-15'
-    args: ['mvn', '-Dmaven.wagon.http.retryHandler.count=3', 'compile']
-    dir: 'testing-framework'
-  - name: 'maven:3.6.3-openjdk-15'
-    args: [ 'mvn', '-Dmaven.wagon.http.retryHandler.count=3', 'test' ]
-    dir: 'testing-framework'
-  - name: 'maven:3.6.3-openjdk-15'
-    args: [ 'mvn', '-Dmaven.wagon.http.retryHandler.count=3', 'package' ]
-    dir: 'testing-framework'
-  - name: 'maven:3.6.3-openjdk-15'
-    args: [ 'mvn', '-Dmaven.wagon.http.retryHandler.count=3', 'deploy' ]
+    args: ['mvn', '-Dmaven.wagon.http.retryHandler.count=3', 'compile', 'test', 'package', 'deploy']
     dir: 'testing-framework'

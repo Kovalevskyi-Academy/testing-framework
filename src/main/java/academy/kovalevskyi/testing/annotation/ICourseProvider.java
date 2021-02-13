@@ -6,14 +6,21 @@ package academy.kovalevskyi.testing.annotation;
 public interface ICourseProvider {
 
   /**
-   * Course name.
+   * Course full name.
    *
    * @return name
    */
   String name();
 
   /**
-   * Course id.
+   * Course unique key.
+   *
+   * @return uniqueId
+   */
+  String key();
+
+  /**
+   * Course unique id.
    *
    * @return id
    */

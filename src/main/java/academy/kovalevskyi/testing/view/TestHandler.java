@@ -191,6 +191,22 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     AnsiConsole.systemUninstall();
   }
 
+  /**
+   * Provides an error message of NoClassDefFoundError.
+   *
+   * @param error NoClassDefFoundError instance
+   * @return prepared error message
+   */
+  public static String getReason(final NoClassDefFoundError error) {
+    final var result = new StringJoiner("\n");
+    result.add(String.format("\rZeus can not find '%s'", error.getMessage()));
+    result.add("Reasons:");
+    result.add("- your jar file is absent in the classpath");
+    result.add("- class is absent in your jar file");
+    result.add("- structure of the project is not default");
+    return result.toString();
+  }
+
   private void enableConsolePrints() {
     System.setOut(defaultPrintStream);
     System.setErr(defaultErrorPrintStream);
@@ -314,21 +330,16 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     return String.format("%s%n%s", text, "-".repeat(text.trim().length()));
   }
 
-  public static String prepareReason(final State state, final Throwable cause) {
+  private String prepareReason(final State state, final Throwable cause) {
     final var result = Ansi.ansi().fg(state.color);
     if (cause instanceof AssertionError || cause.getClass().equals(TestAbortedException.class)) {
       result.a(cause.getMessage().trim());
     } else if (state == State.NO_CLASS) {
-      result
-          .format("\rZeus can not find '%s'%n", cause.getMessage())
-          .format("Reasons:%n")
-          .format("- your jar file is absent in the classpath%n")
-          .format("- class is absent in your jar file%n")
-          .a("- structure of the project is not default");
+      result.a(getReason((NoClassDefFoundError) cause));
     } else if (state == State.NO_METHOD) {
       result.format("%s is absent in your class!", cause.getMessage());
     } else if (state == State.INTERRUPTED) {
-      result.a("Time is out! Looks like an infinity loop or your method is so slowly..");
+      result.format("Time is out! Looks like an infinity loop or your method is so slowly...%n");
     } else {
       result.format("Thrown unexpected %s", cause.getClass().getName());
       var message = cause.getMessage();

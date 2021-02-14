@@ -3,40 +3,25 @@ package academy.kovalevskyi.testing.util;
 import academy.kovalevskyi.testing.AbstractTestExecutor;
 import academy.kovalevskyi.testing.annotation.Container;
 import academy.kovalevskyi.testing.annotation.ICourseProvider;
-import academy.kovalevskyi.testing.common.BasicStdTest;
 import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
 import academy.kovalevskyi.testing.service.IRequest;
 import academy.kovalevskyi.testing.service.ContainerComparator;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.reflections.Reflections;
 
 /**
- * Provides all available courses from packages {@value FIRST_PACKAGE,SECOND_PACKAGE}.
+ * Provides all available courses from packages {@value COURSE_PACKAGE}.
  */
 public class CourseManager {
 
-  private static final Set<Class<? extends AbstractTestExecutor>> CONTAINERS;
-
-  // TODO change base package for all courses to 'academy.kovalevskyi.course'
-  private static final String FIRST_PACKAGE = "academy.kovalevskyi.javadeepdive";
-  private static final String SECOND_PACKAGE = "com.kovalevskyi.academy.codingbootcamp";
+  private static final List<Class<? extends AbstractTestExecutor>> CONTAINERS;
+  private static final String COURSE_PACKAGE = "academy.kovalevskyi.course";
 
   static {
-    var reflections = new Reflections(FIRST_PACKAGE, SECOND_PACKAGE);
-    CONTAINERS = new TreeSet<>(new ContainerComparator());
-    // TODO after changing base package for courses code below should be deleted
-    // to remove BasicStdTest class from list to fix an error (temporary solution)
-    var tmp = reflections
-        .getSubTypesOf(AbstractTestExecutor.class)
-        .stream()
-        .filter(clazz -> !clazz.equals(BasicStdTest.class))
-        .collect(Collectors.toSet());
-    CONTAINERS.addAll(tmp);
+    CONTAINERS = findContainers();
   }
 
   /**
@@ -46,13 +31,11 @@ public class CourseManager {
    * @throws ContainerNotFoundException if containers are absent
    */
   public static List<Class<? extends AbstractTestExecutor>> getContainers() {
-    final var result = CONTAINERS.stream().collect(Collectors.toUnmodifiableList());
-
-    if (result.isEmpty()) {
-      throw new ContainerNotFoundException("Container's list is empty");
+    if (CONTAINERS.isEmpty()) {
+      throw new ContainerNotFoundException("List of containers is empty");
     }
 
-    return result;
+    return CONTAINERS;
   }
 
   /**
@@ -115,6 +98,19 @@ public class CourseManager {
       var message = String.format("%s is not annotated with @Container", clazz.getName());
       throw new NotAnnotatedContainerException(message);
     }
+
     return clazz.getAnnotation(Container.class);
+  }
+
+  private static List<Class<? extends AbstractTestExecutor>> findContainers() {
+    final var jcbPackage = "com.kovalevskyi.academy.codingbootcamp"; // TODO remove it later
+    final var jddPackage = "academy.kovalevskyi.javadeepdive"; // TODO remove it later
+
+    return new Reflections(jcbPackage, jddPackage) // TODO change prefix to COURSE_PACKAGE variable
+        .getSubTypesOf(AbstractTestExecutor.class)
+        .stream()
+        .filter(clazz -> clazz.isAnnotationPresent(Container.class))
+        .sorted(new ContainerComparator())
+        .collect(Collectors.toUnmodifiableList());
   }
 }

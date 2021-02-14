@@ -21,7 +21,7 @@ public class CourseManager {
   private static final String COURSE_PACKAGE = "academy.kovalevskyi.course";
 
   static {
-    CONTAINERS = findContainers();
+    CONTAINERS = initialize();
   }
 
   /**
@@ -102,7 +102,7 @@ public class CourseManager {
     return clazz.getAnnotation(Container.class);
   }
 
-  private static List<Class<? extends AbstractTestExecutor>> findContainers() {
+  private static List<Class<? extends AbstractTestExecutor>> initialize() {
     final var jcbPackage = "com.kovalevskyi.academy.codingbootcamp"; // TODO remove it later
     final var jddPackage = "academy.kovalevskyi.javadeepdive"; // TODO remove it later
 

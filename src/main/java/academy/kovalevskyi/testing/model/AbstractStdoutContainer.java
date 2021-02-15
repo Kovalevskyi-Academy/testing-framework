@@ -13,20 +13,30 @@ import org.junit.jupiter.api.BeforeEach;
 public abstract class AbstractStdoutContainer extends AbstractContainer {
 
   protected final ByteArrayOutputStream outputStreamCaptor;
-  private PrintStream printStream;
+  protected final ByteArrayOutputStream errorStreamCaptor;
+  private final PrintStream defaultStdout;
+  private final PrintStream defaultStderr;
 
   public AbstractStdoutContainer() {
     outputStreamCaptor = new ByteArrayOutputStream();
+    errorStreamCaptor = new ByteArrayOutputStream();
+    defaultStdout = System.out;
+    defaultStderr = System.err;
   }
 
   @BeforeEach
   public void setUpCustomOutput() {
-    printStream = System.out;
     System.setOut(new PrintStream(outputStreamCaptor));
+    System.setErr(new PrintStream(errorStreamCaptor));
   }
 
   @AfterEach
   public void setUpDefaultOutput() {
-    System.setOut(printStream);
+    outputStreamCaptor.reset();
+    errorStreamCaptor.reset();
+    System.out.close();
+    System.err.close();
+    System.setOut(defaultStdout);
+    System.setErr(defaultStderr);
   }
 }

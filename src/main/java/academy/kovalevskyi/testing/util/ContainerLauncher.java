@@ -21,11 +21,11 @@ public class ContainerLauncher {
    *
    * @param errorMode show only unsuccessful methods
    * @param container any heir of AbstractContainer class
-   * @throws Throwable a lot of reasons
+   * @throws Exception a lot of reasons
    */
   public static void execute(
       final boolean errorMode,
-      final Class<? extends AbstractContainer> container) throws Throwable {
+      final Class<? extends AbstractContainer> container) throws Exception {
     System.setProperty(IPropertyManager.ERROR_MODE, String.valueOf(errorMode));
     execute(container);
   }
@@ -35,11 +35,11 @@ public class ContainerLauncher {
    *
    * @param errorMode  show only unsuccessful methods
    * @param containers list of any heir of AbstractContainer class
-   * @throws Throwable a lot of reasons
+   * @throws Exception a lot of reasons
    */
   public static void execute(
       final boolean errorMode,
-      final List<Class<? extends AbstractContainer>> containers) throws Throwable {
+      final List<Class<? extends AbstractContainer>> containers) throws Exception {
     if (containers.isEmpty()) {
       throw new ContainerNotFoundException("No containers to execute");
     }
@@ -54,21 +54,21 @@ public class ContainerLauncher {
    *
    * @param errorMode show only unsuccessful methods
    * @param request   combined request of containers
-   * @throws Throwable a lot of reasons
+   * @throws Exception a lot of reasons
    */
   public static void execute(final boolean errorMode, final ContainerRequest request)
-      throws Throwable {
+      throws Exception {
     execute(errorMode, ContainerManager.getContainers(request));
   }
 
-  private static void execute(final Class<? extends AbstractContainer> container) throws Throwable {
+  private static void execute(final Class<? extends AbstractContainer> container) throws Exception {
     final var request = LauncherDiscoveryRequestBuilder
         .request()
         .selectors(selectClass(container))
         .build();
     try {
       LauncherFactory.create().execute(request);
-    } catch (Throwable exception) {
+    } catch (Exception exception) {
       final var noClassException = (NoClassDefFoundError) Stream
           .iterate(exception, Objects::nonNull, Throwable::getCause)
           .filter(throwable -> throwable.getClass().equals(NoClassDefFoundError.class))
@@ -76,7 +76,7 @@ public class ContainerLauncher {
           .orElseThrow(() -> exception);
       AnsiConsole.systemInstall();
       System.out.println(ContainerHandler.getReason(noClassException));
-      System.out.println();
+      System.out.println("-----------------------------------------");
       AnsiConsole.systemUninstall();
     }
   }

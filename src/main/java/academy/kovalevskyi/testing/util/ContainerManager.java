@@ -1,12 +1,12 @@
 package academy.kovalevskyi.testing.util;
 
-import academy.kovalevskyi.testing.AbstractTestExecutor;
+import academy.kovalevskyi.testing.model.AbstractContainer;
 import academy.kovalevskyi.testing.annotation.Container;
 import academy.kovalevskyi.testing.annotation.ICourseProvider;
 import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
 import academy.kovalevskyi.testing.service.IRequest;
-import academy.kovalevskyi.testing.service.ContainerComparator;
+import academy.kovalevskyi.testing.service.BaseComparator;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,9 +15,9 @@ import org.reflections.Reflections;
 /**
  * Provides all available courses from packages {@value COURSE_PACKAGE}.
  */
-public class CourseManager {
+public class ContainerManager {
 
-  private static final List<Class<? extends AbstractTestExecutor>> CONTAINERS;
+  private static final List<Class<? extends AbstractContainer>> CONTAINERS;
   private static final String COURSE_PACKAGE = "academy.kovalevskyi.course";
 
   static {
@@ -30,7 +30,7 @@ public class CourseManager {
    * @return list of classes of containers
    * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<? extends AbstractTestExecutor>> getContainers() {
+  public static List<Class<? extends AbstractContainer>> getContainers() {
     if (CONTAINERS.isEmpty()) {
       throw new ContainerNotFoundException("List of containers is empty");
     }
@@ -41,11 +41,11 @@ public class CourseManager {
   /**
    * Provides containers by request.
    *
-   * @param request combined request
+   * @param request combined request of containers
    * @return list of classes of containers
    * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<? extends AbstractTestExecutor>> getContainers(final IRequest request) {
+  public static List<Class<? extends AbstractContainer>> getContainers(final IRequest request) {
     final var result = CONTAINERS
         .stream()
         .filter(request.getPredicate())
@@ -62,11 +62,11 @@ public class CourseManager {
    * Extracts an instance of ICourseProvider implementation from class witch is annotated with
    * Container annotation.
    *
-   * @param clazz AbstractTestExecutor heir class
+   * @param clazz any heir of AbstractContainer class
    * @return instance of ICourseProvider
    * @throws ExceptionInInitializerError some edge situations
    */
-  public static ICourseProvider initProvider(final Class<? extends AbstractTestExecutor> clazz) {
+  public static ICourseProvider initProvider(final Class<? extends AbstractContainer> clazz) {
     return initProvider(getAnnotation(clazz));
   }
 
@@ -89,11 +89,11 @@ public class CourseManager {
   /**
    * Extracts a Container instance from class witch is annotated with Container annotation.
    *
-   * @param clazz any heir of AbstractTestExecutor class
+   * @param clazz any heir of AbstractContainer class
    * @return Container instance
    * @throws NotAnnotatedContainerException if class is not annotated with @Container
    */
-  public static Container getAnnotation(final Class<? extends AbstractTestExecutor> clazz) {
+  public static Container getAnnotation(final Class<? extends AbstractContainer> clazz) {
     if (!clazz.isAnnotationPresent(Container.class)) {
       var message = String.format("%s is not annotated with @Container", clazz.getName());
       throw new NotAnnotatedContainerException(message);
@@ -102,15 +102,15 @@ public class CourseManager {
     return clazz.getAnnotation(Container.class);
   }
 
-  private static List<Class<? extends AbstractTestExecutor>> initialize() {
+  private static List<Class<? extends AbstractContainer>> initialize() {
     final var jcbPackage = "com.kovalevskyi.academy.codingbootcamp"; // TODO remove it later
     final var jddPackage = "academy.kovalevskyi.javadeepdive"; // TODO remove it later
 
     return new Reflections(jcbPackage, jddPackage) // TODO change prefix to COURSE_PACKAGE variable
-        .getSubTypesOf(AbstractTestExecutor.class)
+        .getSubTypesOf(AbstractContainer.class)
         .stream()
         .filter(clazz -> clazz.isAnnotationPresent(Container.class))
-        .sorted(new ContainerComparator())
+        .sorted(new BaseComparator())
         .collect(Collectors.toUnmodifiableList());
   }
 }

@@ -35,8 +35,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private String containerName;
   private String testName;
   private String repeatedTestSummary;
-  private PrintStream defaultPrintStream;
-  private PrintStream defaultErrorPrintStream;
+  private PrintStream defaultStdout;
+  private PrintStream defaultStderr;
   private PrintStream gagPrintStream;
   private boolean repeatedTest;
   private boolean abortedRepeatedTest;
@@ -53,9 +53,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     AnsiConsole.systemInstall();
     errorMode = Boolean.parseBoolean(System.getProperty(IPropertyManager.ERROR_MODE));
     containerName = context.getDisplayName();
-    defaultPrintStream = System.out;
-    defaultErrorPrintStream = System.err;
+    defaultStdout = System.out;
+    defaultStderr = System.err;
     gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
+    System.setOut(gagPrintStream);
+    System.setErr(gagPrintStream);
     if (!errorMode) {
       printHeader();
     }
@@ -98,7 +100,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     timer.schedule(createTimer(), 15_000);
     testName = String.format("%s()", context.getRequiredTestMethod().getName());
     printEntry(State.RUNNING);
-    disableConsolePrints();
     beginning = System.currentTimeMillis();
   }
 
@@ -111,7 +112,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   public void afterEach(ExtensionContext context) {
     time += System.currentTimeMillis() - beginning;
     timer.cancel();
-    enableConsolePrints();
   }
 
   /**
@@ -173,14 +173,17 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     printSummary();
     final var errors = failed + aborted;
     if (!errorMode || errors > 0) {
-      System.out.println(underline(prepareFooter()));
+      defaultStdout.println(underline(prepareFooter()));
     } else if (errors == 0) {
-      System.out.printf(
+      defaultStdout.printf(
           "\r%s is done successfully in %s!%n",
           context.getDisplayName(),
           prepareDuration());
     }
     AnsiConsole.systemUninstall();
+    System.setOut(defaultStdout);
+    System.setErr(defaultStderr);
+    gagPrintStream.close();
   }
 
   /**
@@ -199,18 +202,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     return result.toString();
   }
 
-  private void enableConsolePrints() {
-    System.setOut(defaultPrintStream);
-    System.setErr(defaultErrorPrintStream);
-  }
-
-  private void disableConsolePrints() {
-    System.setOut(gagPrintStream);
-    System.setErr(gagPrintStream);
-  }
-
   private void printHeader() {
-    System.out.printf("\rResult of %s:%n%n", containerName);
+    defaultStdout.printf("\rResult of %s:%n%n", containerName);
   }
 
   private void printEntry(final State state) {
@@ -221,12 +214,12 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
           printHeader();
         }
         if (errors == 0) {
-          System.out.printf("\r%s -> %s", containerName, testName);
+          defaultStdout.printf("\r%s -> %s", containerName, testName);
         } else {
-          System.out.printf("\r%s", testName);
+          defaultStdout.printf("\r%s", testName);
         }
       } else {
-        System.out.printf("\r%s", testName);
+        defaultStdout.printf("\r%s", testName);
       }
       if (repeatedTest) {
         repeatedTestSummary = prepareSummary(
@@ -234,15 +227,15 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
             state,
             failedRepeatedTestInvocations,
             repeatedTestInvocations);
-        System.out.printf(" test %d", repeatedTestInvocations);
+        defaultStdout.printf(" test %d", repeatedTestInvocations);
       }
       var status = prepareStatus(state);
       if (state == State.RUNNING) {
-        System.out.print(status);
+        defaultStdout.print(status);
       } else if (state == State.FAILED || state == State.INTERRUPTED || (!repeatedTest
           && (state == State.ABORTED || state == State.NO_METHOD
           || (!errorMode && state == State.SUCCESSFUL)))) {
-        System.out.println(status);
+        defaultStdout.println(status);
       }
     }
   }
@@ -253,7 +246,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       if (repeatedTest && (state == State.NO_METHOD || state == State.ABORTED)) {
         repeatedTestSummary += String.format("%n%s", prepareReason(state, cause));
       } else {
-        System.out.println(prepareReason(state, cause));
+        defaultStdout.println(prepareReason(state, cause));
       }
     }
   }
@@ -262,7 +255,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     if (!noClassDef) {
       final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
       if (repeatedTest && successful != 0 && (!errorMode || abortedRepeatedTest)) {
-        System.out.println(repeatedTestSummary);
+        defaultStdout.println(repeatedTestSummary);
       }
     }
   }
@@ -348,7 +341,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
 
       @Override
       public void run() {
-        enableConsolePrints();
         printEntry(State.INTERRUPTED, new TimeoutException());
         System.exit(0);
       }

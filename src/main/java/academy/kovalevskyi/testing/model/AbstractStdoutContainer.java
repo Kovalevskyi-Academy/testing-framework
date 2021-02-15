@@ -12,8 +12,12 @@ import org.junit.jupiter.api.BeforeEach;
  */
 public abstract class AbstractStdoutContainer extends AbstractContainer {
 
-  protected final ByteArrayOutputStream outputStreamCaptor = new ByteArrayOutputStream();
+  protected final ByteArrayOutputStream outputStreamCaptor;
   private PrintStream printStream;
+
+  public AbstractStdoutContainer() {
+    outputStreamCaptor = new ByteArrayOutputStream();
+  }
 
   @BeforeEach
   public void setUpCustomOutput() {

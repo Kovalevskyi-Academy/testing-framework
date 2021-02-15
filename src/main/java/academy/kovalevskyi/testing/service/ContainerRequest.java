@@ -1,8 +1,8 @@
 package academy.kovalevskyi.testing.service;
 
-import academy.kovalevskyi.testing.AbstractTestExecutor;
+import academy.kovalevskyi.testing.model.AbstractContainer;
 import academy.kovalevskyi.testing.exception.RequestException;
-import academy.kovalevskyi.testing.util.CourseManager;
+import academy.kovalevskyi.testing.util.ContainerManager;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -12,14 +12,14 @@ import java.util.function.Predicate;
  */
 public class ContainerRequest implements IRequest {
 
-  private final Predicate<Class<? extends AbstractTestExecutor>> predicate;
+  private final Predicate<Class<? extends AbstractContainer>> predicate;
 
-  private ContainerRequest(Predicate<Class<? extends AbstractTestExecutor>> predicate) {
+  private ContainerRequest(Predicate<Class<? extends AbstractContainer>> predicate) {
     this.predicate = predicate;
   }
 
   @Override
-  public Predicate<Class<? extends AbstractTestExecutor>> getPredicate() {
+  public Predicate<Class<? extends AbstractContainer>> getPredicate() {
     return predicate;
   }
 
@@ -35,7 +35,7 @@ public class ContainerRequest implements IRequest {
   public static class Builder {
 
     private boolean courseInitialized;
-    private final List<Predicate<Class<? extends AbstractTestExecutor>>> predicates;
+    private final List<Predicate<Class<? extends AbstractContainer>>> predicates;
 
     private Builder() {
       this.predicates = new ArrayList<>();
@@ -43,28 +43,29 @@ public class ContainerRequest implements IRequest {
 
     public Builder course(int id) {
       checkCourseInitialization();
-      this.predicates.add(clazz -> CourseManager.initProvider(clazz).id() == id);
+      this.predicates.add(clazz -> ContainerManager.initProvider(clazz).id() == id);
       return this;
     }
 
     public Builder course(String key) {
       checkCourseInitialization();
-      this.predicates.add(clazz -> CourseManager.initProvider(clazz).key().equalsIgnoreCase(key));
+      this.predicates
+          .add(clazz -> ContainerManager.initProvider(clazz).key().equalsIgnoreCase(key));
       return this;
     }
 
     public Builder week(int week) {
-      this.predicates.add(clazz -> CourseManager.getAnnotation(clazz).week() == week);
+      this.predicates.add(clazz -> ContainerManager.getAnnotation(clazz).week() == week);
       return this;
     }
 
     public Builder day(int day) {
-      this.predicates.add(clazz -> CourseManager.getAnnotation(clazz).day() == day);
+      this.predicates.add(clazz -> ContainerManager.getAnnotation(clazz).day() == day);
       return this;
     }
 
     public Builder id(int id) {
-      this.predicates.add(clazz -> CourseManager.getAnnotation(clazz).id() == id);
+      this.predicates.add(clazz -> ContainerManager.getAnnotation(clazz).id() == id);
       return this;
     }
 

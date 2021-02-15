@@ -7,9 +7,11 @@ import academy.kovalevskyi.testing.model.AbstractContainer;
 import academy.kovalevskyi.testing.service.ContainerHandler;
 import academy.kovalevskyi.testing.service.ContainerRequest;
 import academy.kovalevskyi.testing.service.IPropertyManager;
+import academy.kovalevskyi.testing.service.State;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Stream;
+import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 import org.junit.platform.launcher.core.LauncherFactory;
@@ -75,7 +77,13 @@ public class ContainerLauncher {
           .findFirst()
           .orElseThrow(() -> exception);
       AnsiConsole.systemInstall();
-      System.out.println(ContainerHandler.getReason(noClassException));
+      var message = Ansi
+          .ansi()
+          .fg(State.NO_CLASS.color)
+          .a(ContainerHandler.getReason(noClassException))
+          .reset()
+          .toString();
+      System.out.println(message);
       System.out.println("-----------------------------------------");
       AnsiConsole.systemUninstall();
     }

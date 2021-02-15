@@ -51,7 +51,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
-    errorMode = Boolean.parseBoolean(System.getProperty(PropertyManager.ERROR_MODE));
+    errorMode = Boolean.parseBoolean(System.getProperty(IPropertyManager.ERROR_MODE));
     containerName = context.getDisplayName();
     defaultPrintStream = System.out;
     defaultErrorPrintStream = System.err;

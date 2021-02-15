@@ -1,4 +1,4 @@
-package academy.kovalevskyi.testing.view;
+package academy.kovalevskyi.testing.service;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -21,7 +21,7 @@ import org.opentest4j.TestAbortedException;
 /**
  * This handler makes beautiful console output for JUnit tests.
  */
-public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCallback,
+public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAllCallback,
     BeforeEachCallback, AfterEachCallback, ExecutionCondition {
 
   private int successful = 0;
@@ -41,16 +41,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   private boolean repeatedTest;
   private boolean abortedRepeatedTest;
   private boolean noClassDef;
-  private static boolean errorMode;
-
-  /**
-   * Enables error mode to print to console only failed methods.
-   *
-   * @param flag true is enabled
-   */
-  public static void setErrorMode(final boolean flag) {
-    errorMode = flag;
-  }
+  private boolean errorMode;
 
   /**
    * Provides additional behavior to test container before all tests are invoked.
@@ -60,6 +51,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
+    errorMode = Boolean.parseBoolean(System.getProperty(PropertyManager.ERROR_MODE));
     containerName = context.getDisplayName();
     defaultPrintStream = System.out;
     defaultErrorPrintStream = System.err;

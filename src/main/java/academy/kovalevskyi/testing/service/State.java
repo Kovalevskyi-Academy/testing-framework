@@ -1,4 +1,4 @@
-package academy.kovalevskyi.testing.view;
+package academy.kovalevskyi.testing.service;
 
 import org.fusesource.jansi.Ansi.Color;
 

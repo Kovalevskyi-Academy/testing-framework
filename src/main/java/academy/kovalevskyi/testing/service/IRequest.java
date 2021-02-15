@@ -1,6 +1,6 @@
 package academy.kovalevskyi.testing.service;
 
-import academy.kovalevskyi.testing.AbstractTestExecutor;
+import academy.kovalevskyi.testing.model.AbstractContainer;
 import java.util.function.Predicate;
 
 /**
@@ -8,5 +8,5 @@ import java.util.function.Predicate;
  */
 public interface IRequest {
 
-  Predicate<Class<? extends AbstractTestExecutor>> getPredicate();
+  Predicate<Class<? extends AbstractContainer>> getPredicate();
 }

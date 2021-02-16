@@ -8,21 +8,14 @@ public interface ICourseProvider {
   /**
    * Course full name.
    *
-   * @return name
+   * @return name of course
    */
   String name();
 
   /**
    * Course unique key.
    *
-   * @return uniqueId
+   * @return key of course
    */
   String key();
-
-  /**
-   * Course unique id.
-   *
-   * @return id
-   */
-  int id();
 }

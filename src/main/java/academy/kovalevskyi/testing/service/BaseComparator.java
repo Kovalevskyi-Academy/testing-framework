@@ -18,8 +18,8 @@ public class BaseComparator implements Comparator<Class<? extends AbstractContai
     final var course1 = ContainerManager.initProvider(container1);
     final var course2 = ContainerManager.initProvider(container2);
 
-    if (course1.id() != course2.id()) {
-      return course1.id() - course2.id();
+    if (!course1.key().equals(course2.key())) {
+      return course1.key().compareTo(course2.key());
     }
     if (container1.week() != container2.week()) {
       return container1.week() - container2.week();

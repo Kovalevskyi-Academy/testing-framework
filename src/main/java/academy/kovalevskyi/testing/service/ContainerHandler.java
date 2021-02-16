@@ -322,7 +322,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     } else if (state == State.NO_CLASS) {
       result.a(getReason((NoClassDefFoundError) cause));
     } else if (state == State.NO_METHOD) {
-      result.format("%s is absent in your class!", cause.getMessage());
+      result.format("%s%n", cause.getMessage());
+      result.format("Reasons:%n");
+      result.format("- method is absent%n");
+      result.format("- signature of method is different");
     } else if (state == State.INTERRUPTED) {
       result.format("Time is out! Looks like an infinity loop or your method is so slowly...%n");
     } else {

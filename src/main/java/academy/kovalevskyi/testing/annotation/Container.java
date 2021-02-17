@@ -1,5 +1,6 @@
 package academy.kovalevskyi.testing.annotation;
 
+import academy.kovalevskyi.testing.model.AbstractContainer;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -7,16 +8,16 @@ import java.lang.annotation.Target;
 
 /**
  * Serves for marking test containers. All test classes directly or indirectly need to inherit
- * AbstractTestExecutor. Class only annotation.
+ * {@link AbstractContainer}. Class only annotation.
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Container {
 
   /**
-   * Class which provides some course information.
+   * Class which provides some important information of course.
    *
-   * @return some class
+   * @return any class which implements {@link ICourseProvider}
    */
   Class<? extends ICourseProvider> course();
 

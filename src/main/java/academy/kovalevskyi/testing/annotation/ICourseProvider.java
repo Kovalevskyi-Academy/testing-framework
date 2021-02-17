@@ -1,7 +1,7 @@
 package academy.kovalevskyi.testing.annotation;
 
 /**
- * Provides some basic information about a course.
+ * Provides important information about some course.
  */
 public interface ICourseProvider {
 

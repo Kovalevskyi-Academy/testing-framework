@@ -34,7 +34,10 @@ public class ContainerRequest implements IRequest {
 
   public static class Builder {
 
-    private boolean courseInitialized;
+    private String key;
+    private boolean week;
+    private boolean day;
+    private boolean id;
     private final List<Predicate<Class<? extends AbstractContainer>>> predicates;
 
     private Builder() {
@@ -42,29 +45,38 @@ public class ContainerRequest implements IRequest {
     }
 
     public Builder course(String key) {
-      courseInitialized = true;
+      this.key = key;
       predicates.add(clazz -> ContainerManager.initProvider(clazz).key().equalsIgnoreCase(key));
       return this;
     }
 
-    public Builder week(int week) {
-      predicates.add(clazz -> ContainerManager.getAnnotation(clazz).week() == week);
+    public Builder week(int number) {
+      week = true;
+      predicates.add(clazz -> ContainerManager.getAnnotation(clazz).week() == number);
       return this;
     }
 
-    public Builder day(int day) {
-      predicates.add(clazz -> ContainerManager.getAnnotation(clazz).day() == day);
+    public Builder day(int number) {
+      day = true;
+      predicates.add(clazz -> ContainerManager.getAnnotation(clazz).day() == number);
       return this;
     }
 
-    public Builder id(int id) {
-      predicates.add(clazz -> ContainerManager.getAnnotation(clazz).id() == id);
+    public Builder container(int number) {
+      id = true;
+      predicates.add(clazz -> ContainerManager.getAnnotation(clazz).id() == number);
       return this;
     }
 
     public ContainerRequest build() {
-      if (!courseInitialized) {
-        throw new RequestException("Course id should be initialized!");
+      if (key == null || key.isBlank()) {
+        throw new RequestException("Course key should be provided");
+      }
+      if (id && (!day || !week)) {
+        throw new RequestException("Week and day should be provided to get some container");
+      }
+      if (day && !week) {
+        throw new RequestException("Week should be provided to get containers of some day");
       }
 
       var predicate = predicates
@@ -74,5 +86,4 @@ public class ContainerRequest implements IRequest {
       return new ContainerRequest(predicate);
     }
   }
-
 }

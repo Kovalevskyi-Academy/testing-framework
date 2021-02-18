@@ -1,24 +1,23 @@
 package academy.kovalevskyi.testing.util;
 
-import academy.kovalevskyi.testing.model.AbstractContainer;
 import academy.kovalevskyi.testing.annotation.Container;
 import academy.kovalevskyi.testing.annotation.ICourseProvider;
 import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
-import academy.kovalevskyi.testing.service.IRequest;
 import academy.kovalevskyi.testing.service.BaseComparator;
+import academy.kovalevskyi.testing.service.IRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.reflections.Reflections;
 
 /**
- * Provides all available courses from packages {@value COURSE_PACKAGE}.
+ * Provides all available courses from package {@value COURSE_PACKAGE}.
  */
 public class ContainerManager {
 
-  private static final List<Class<? extends AbstractContainer>> CONTAINERS;
-  private static final String COURSE_PACKAGE = "academy.kovalevskyi.course";
+  private static final List<Class<?>> CONTAINERS;
+  private static final String COURSE_PACKAGE = "academy.kovalevskyi";
 
   static {
     CONTAINERS = initialize();
@@ -27,12 +26,12 @@ public class ContainerManager {
   /**
    * Provides all available containers.
    *
-   * @return list of classes of containers
+   * @return list of test classes
    * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<? extends AbstractContainer>> getContainers() {
+  public static List<Class<?>> getContainers() {
     if (CONTAINERS.isEmpty()) {
-      throw new ContainerNotFoundException("List of containers is empty");
+      throw new ContainerNotFoundException("No available containers");
     }
 
     return CONTAINERS;
@@ -42,10 +41,10 @@ public class ContainerManager {
    * Provides containers by request.
    *
    * @param request combined request of containers
-   * @return list of classes of containers
+   * @return list of test classes
    * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<? extends AbstractContainer>> getContainers(final IRequest request) {
+  public static List<Class<?>> getContainers(final IRequest request) {
     final var result = CONTAINERS
         .stream()
         .filter(request.getPredicate())
@@ -59,41 +58,45 @@ public class ContainerManager {
   }
 
   /**
-   * Extracts an instance of ICourseProvider implementation from class witch is annotated with
-   * Container annotation.
+   * Extracts an instance of {@link ICourseProvider} implementation from class witch is annotated
+   * with {@link Container} annotation.
    *
-   * @param clazz any heir of AbstractContainer class
-   * @return instance of ICourseProvider
+   * @param clazz test class
+   * @return instance of {@link ICourseProvider}
    * @throws ExceptionInInitializerError some edge situations
    */
-  public static ICourseProvider initProvider(final Class<? extends AbstractContainer> clazz) {
+  public static ICourseProvider initProvider(final Class<?> clazz) {
     return initProvider(getAnnotation(clazz));
   }
 
   /**
-   * Extracts an instance of ICourseProvider implementation from class witch is annotated with
-   * Container annotation.
+   * Extracts an instance of {@link ICourseProvider} implementation from class witch is annotated
+   * with {@link Container} annotation.
    *
-   * @param annotation Container instance
-   * @return instance of ICourseProvider
+   * @param annotation {@link Container} instance
+   * @return instance of {@link ICourseProvider}
    * @throws ExceptionInInitializerError some edge situations
    */
   public static ICourseProvider initProvider(final Container annotation) {
     try {
-      return (ICourseProvider) annotation.course().getConstructors()[0].newInstance();
-    } catch (InstantiationException | IllegalAccessException | InvocationTargetException e) {
-      throw new ExceptionInInitializerError(e.getMessage());
+      return annotation.course().getConstructor().newInstance();
+    } catch (NoSuchMethodException
+        | InstantiationException
+        | IllegalAccessException
+        | InvocationTargetException e) {
+      throw new ExceptionInInitializerError(e);
     }
   }
 
   /**
-   * Extracts a Container instance from class witch is annotated with Container annotation.
+   * Extracts a {@link Container} instance from class witch is annotated with {@link Container}
+   * annotation.
    *
-   * @param clazz any heir of AbstractContainer class
-   * @return Container instance
-   * @throws NotAnnotatedContainerException if class is not annotated with @Container
+   * @param clazz any class
+   * @return {@link Container} instance
+   * @throws NotAnnotatedContainerException if class is not annotated with {@link Container}
    */
-  public static Container getAnnotation(final Class<? extends AbstractContainer> clazz) {
+  public static Container getAnnotation(final Class<?> clazz) {
     if (!clazz.isAnnotationPresent(Container.class)) {
       var message = String.format("%s is not annotated with @Container", clazz.getName());
       throw new NotAnnotatedContainerException(message);
@@ -102,14 +105,12 @@ public class ContainerManager {
     return clazz.getAnnotation(Container.class);
   }
 
-  private static List<Class<? extends AbstractContainer>> initialize() {
+  private static List<Class<?>> initialize() {
     final var jcbPackage = "com.kovalevskyi.academy.codingbootcamp"; // TODO remove it later
-    final var jddPackage = "academy.kovalevskyi.javadeepdive"; // TODO remove it later
 
-    return new Reflections(jcbPackage, jddPackage) // TODO change prefix to COURSE_PACKAGE variable
-        .getSubTypesOf(AbstractContainer.class)
+    return new Reflections(COURSE_PACKAGE, jcbPackage)
+        .getTypesAnnotatedWith(Container.class)
         .stream()
-        .filter(clazz -> clazz.isAnnotationPresent(Container.class))
         .sorted(new BaseComparator())
         .collect(Collectors.toUnmodifiableList());
   }

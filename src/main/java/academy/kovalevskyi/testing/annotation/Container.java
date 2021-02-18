@@ -1,15 +1,17 @@
 package academy.kovalevskyi.testing.annotation;
 
-import academy.kovalevskyi.testing.model.AbstractContainer;
+import academy.kovalevskyi.testing.service.ContainerHandler;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
+import org.junit.jupiter.api.extension.ExtendWith;
 
 /**
- * Serves for marking test containers. All test classes directly or indirectly need to inherit
- * {@link AbstractContainer}. Class only annotation.
+ * Serves for marking test classes. All test classes should be annotated with this annotation to
+ * work with Testing Framework.
  */
+@ExtendWith(ContainerHandler.class)
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 public @interface Container {

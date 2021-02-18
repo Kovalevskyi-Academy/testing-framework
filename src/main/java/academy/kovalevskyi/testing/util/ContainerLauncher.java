@@ -3,10 +3,9 @@ package academy.kovalevskyi.testing.util;
 import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass;
 
 import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
-import academy.kovalevskyi.testing.model.AbstractContainer;
 import academy.kovalevskyi.testing.service.ContainerHandler;
 import academy.kovalevskyi.testing.service.ContainerRequest;
-import academy.kovalevskyi.testing.service.IPropertyManager;
+import academy.kovalevskyi.testing.service.IFrameworkProperty;
 import academy.kovalevskyi.testing.service.State;
 import java.util.List;
 import java.util.Objects;
@@ -22,13 +21,11 @@ public class ContainerLauncher {
    * Launches test container programmatically with JUnit engine.
    *
    * @param errorMode show only unsuccessful methods
-   * @param container any heir of AbstractContainer class
+   * @param container test class
    * @throws Exception a lot of reasons
    */
-  public static void execute(
-      final boolean errorMode,
-      final Class<? extends AbstractContainer> container) throws Exception {
-    System.setProperty(IPropertyManager.ERROR_MODE, String.valueOf(errorMode));
+  public static void execute(final boolean errorMode, final Class<?> container) throws Exception {
+    setErrorMode(errorMode);
     execute(container);
   }
 
@@ -36,16 +33,15 @@ public class ContainerLauncher {
    * Launches test containers programmatically with JUnit engine.
    *
    * @param errorMode  show only unsuccessful methods
-   * @param containers list of any heir of AbstractContainer class
+   * @param containers list of test classes
    * @throws Exception a lot of reasons
    */
-  public static void execute(
-      final boolean errorMode,
-      final List<Class<? extends AbstractContainer>> containers) throws Exception {
+  public static void execute(final boolean errorMode, final List<Class<?>> containers)
+      throws Exception {
     if (containers.isEmpty()) {
       throw new ContainerNotFoundException("No containers to execute");
     }
-    System.setProperty(IPropertyManager.ERROR_MODE, String.valueOf(errorMode));
+    setErrorMode(errorMode);
     for (var container : containers) {
       execute(container);
     }
@@ -63,7 +59,7 @@ public class ContainerLauncher {
     execute(errorMode, ContainerManager.getContainers(request));
   }
 
-  private static void execute(final Class<? extends AbstractContainer> container) throws Exception {
+  private static void execute(final Class<?> container) throws Exception {
     final var request = LauncherDiscoveryRequestBuilder
         .request()
         .selectors(selectClass(container))
@@ -87,5 +83,9 @@ public class ContainerLauncher {
       System.out.println("-----------------------------------------");
       AnsiConsole.systemUninstall();
     }
+  }
+
+  private static void setErrorMode(boolean errorMode) {
+    System.setProperty(IFrameworkProperty.ERROR_MODE, String.valueOf(errorMode));
   }
 }

@@ -1,7 +1,6 @@
 package academy.kovalevskyi.testing.service;
 
 import academy.kovalevskyi.testing.exception.RequestException;
-import academy.kovalevskyi.testing.model.AbstractContainer;
 import academy.kovalevskyi.testing.util.ContainerManager;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,21 +11,21 @@ import java.util.function.Predicate;
  */
 public class ContainerRequest implements IRequest {
 
-  private final Predicate<Class<? extends AbstractContainer>> predicate;
+  private final Predicate<Class<?>> predicate;
 
-  private ContainerRequest(Predicate<Class<? extends AbstractContainer>> predicate) {
+  private ContainerRequest(Predicate<Class<?>> predicate) {
     this.predicate = predicate;
   }
 
   @Override
-  public Predicate<Class<? extends AbstractContainer>> getPredicate() {
+  public Predicate<Class<?>> getPredicate() {
     return predicate;
   }
 
   /**
-   * ContainerRequest builder.
+   * Builder of {@link ContainerRequest}.
    *
-   * @return builder
+   * @return builder instance
    */
   public static Builder builder() {
     return new Builder();
@@ -38,7 +37,7 @@ public class ContainerRequest implements IRequest {
     private boolean week;
     private boolean day;
     private boolean id;
-    private final List<Predicate<Class<? extends AbstractContainer>>> predicates;
+    private final List<Predicate<Class<?>>> predicates;
 
     private Builder() {
       predicates = new ArrayList<>();
@@ -68,6 +67,12 @@ public class ContainerRequest implements IRequest {
       return this;
     }
 
+    /**
+     * Prepares request.
+     *
+     * @return instance of {@link ContainerRequest}
+     * @throws RuntimeException if request has some build errors
+     */
     public ContainerRequest build() {
       if (key == null || key.isBlank()) {
         throw new RequestException("Course key should be provided");

@@ -1,4 +1,4 @@
-package academy.kovalevskyi.testing.model;
+package academy.kovalevskyi.testing.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -6,18 +6,17 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 
 /**
- * This class is required for all tests that are going to intercept what will be displayed in the
- * method under test. Test containers with display interceptor methods must inherit from this
- * class.
+ * This class can be used for all tests that are going to intercept what will be displayed in the
+ * method under test.
  */
-public abstract class AbstractStdoutContainer extends AbstractContainer {
+public abstract class AbstractStdCaptor {
 
   protected final ByteArrayOutputStream outputStreamCaptor;
   protected final ByteArrayOutputStream errorStreamCaptor;
   private final PrintStream defaultStdout;
   private final PrintStream defaultStderr;
 
-  public AbstractStdoutContainer() {
+  public AbstractStdCaptor() {
     outputStreamCaptor = new ByteArrayOutputStream();
     errorStreamCaptor = new ByteArrayOutputStream();
     defaultStdout = System.out;

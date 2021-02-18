@@ -2,10 +2,13 @@ package academy.kovalevskyi.testing.service;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -42,6 +45,38 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private boolean abortedRepeatedTest;
   private boolean noClassDef;
   private boolean errorMode;
+
+  /**
+   * Provides an Optional value of any {@link Throwable} instance from chain of throwable.
+   *
+   * @param chain     chain of throwable
+   * @param exception any heir class of {@link Throwable}
+   * @return an Optional of instance of class or an empty Optional
+   */
+  public static Optional<? extends Throwable> getExceptionFromThrowableChain(
+      final Throwable chain,
+      final Class<? extends Throwable> exception) {
+    return Stream
+        .iterate(chain, Objects::nonNull, Throwable::getCause)
+        .dropWhile(throwable -> !throwable.getClass().equals(exception))
+        .findFirst();
+  }
+
+  /**
+   * Provides an error message of {@link NoClassDefFoundError}.
+   *
+   * @param error {@link NoClassDefFoundError} instance
+   * @return prepared error message
+   */
+  public static String getReason(final NoClassDefFoundError error) {
+    final var result = new StringJoiner("\n");
+    result.add(String.format("\rZeus can not find '%s'", error.getMessage()));
+    result.add("Reasons:");
+    result.add("- your jar file is absent in the classpath");
+    result.add("- class is absent in your jar file");
+    result.add("- structure of the project is not default");
+    return result.toString();
+  }
 
   /**
    * Provides additional behavior to test container before all tests are invoked.
@@ -152,10 +187,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     if (repeatedTest) {
       failedRepeatedTestInvocations++;
     }
-    if (cause instanceof NoClassDefFoundError) {
+    if (getExceptionFromThrowableChain(cause, NoClassDefFoundError.class).isPresent()) {
       printEntry(State.NO_CLASS, cause);
       noClassDef = true;
-    } else if (cause instanceof NoSuchMethodError) {
+    } else if (getExceptionFromThrowableChain(cause, NoSuchMethodError.class).isPresent()) {
       printEntry(State.NO_METHOD, cause);
     } else {
       printEntry(State.FAILED, cause);
@@ -183,22 +218,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     System.setOut(defaultStdout);
     System.setErr(defaultStderr);
     gagPrintStream.close();
-  }
-
-  /**
-   * Provides an error message of {@link NoClassDefFoundError}.
-   *
-   * @param error {@link NoClassDefFoundError} instance
-   * @return prepared error message
-   */
-  public static String getReason(final NoClassDefFoundError error) {
-    final var result = new StringJoiner("\n");
-    result.add(String.format("\rZeus can not find '%s'", error.getMessage()));
-    result.add("Reasons:");
-    result.add("- your jar file is absent in the classpath");
-    result.add("- class is absent in your jar file");
-    result.add("- structure of the project is not default");
-    return result.toString();
   }
 
   private void printHeader() {

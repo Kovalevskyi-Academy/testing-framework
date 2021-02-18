@@ -51,7 +51,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
-    errorMode = Boolean.parseBoolean(System.getProperty(IPropertyManager.ERROR_MODE));
+    errorMode = Boolean.parseBoolean(System.getProperty(IFrameworkProperty.ERROR_MODE));
     containerName = context.getDisplayName();
     defaultStdout = System.out;
     defaultStderr = System.err;
@@ -65,8 +65,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
 
   /**
    * Evaluates to determine if a given container or test should be executed based on the supplied
-   * ExtensionContext. Provides additional behavior to each entry in the test container before it is
-   * invoked.
+   * {@link ExtensionContext}. Provides additional behavior to each entry in the test container
+   * before it is invoked.
    *
    * @param context the current extension context
    * @return factory for creating enabled results
@@ -86,7 +86,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     } else if (entryUniqueId.matches("^.*\\[test-template-invocation:#\\d*]$")) {
       repeatedTestInvocations++;
     }
-    return ConditionEvaluationResult.enabled("For printing results of tests to console");
+    return ConditionEvaluationResult.enabled("For printing result of test to console");
   }
 
   /**
@@ -152,11 +152,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     if (repeatedTest) {
       failedRepeatedTestInvocations++;
     }
-    final var clazz = cause.getClass();
-    if (clazz.equals(NoClassDefFoundError.class)) {
+    if (cause instanceof NoClassDefFoundError) {
       printEntry(State.NO_CLASS, cause);
       noClassDef = true;
-    } else if (clazz.equals(NoSuchMethodError.class)) {
+    } else if (cause instanceof NoSuchMethodError) {
       printEntry(State.NO_METHOD, cause);
     } else {
       printEntry(State.FAILED, cause);
@@ -187,9 +186,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   }
 
   /**
-   * Provides an error message of NoClassDefFoundError.
+   * Provides an error message of {@link NoClassDefFoundError}.
    *
-   * @param error NoClassDefFoundError instance
+   * @param error {@link NoClassDefFoundError} instance
    * @return prepared error message
    */
   public static String getReason(final NoClassDefFoundError error) {
@@ -317,17 +316,22 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
 
   private String prepareReason(final State state, final Throwable cause) {
     final var result = Ansi.ansi().fg(state.color);
-    if (cause instanceof AssertionError || cause.getClass().equals(TestAbortedException.class)) {
-      result.a(cause.getMessage().trim());
-    } else if (state == State.NO_CLASS) {
+    if (state == State.NO_CLASS) {
       result.a(getReason((NoClassDefFoundError) cause));
     } else if (state == State.NO_METHOD) {
-      result.format("%s%n", cause.getMessage());
+      result.format("%s%n", cause.getMessage().trim());
       result.format("Reasons:%n");
       result.format("- method is absent%n");
       result.format("- signature of method is different");
     } else if (state == State.INTERRUPTED) {
-      result.format("Time is out! Looks like an infinity loop or your method is so slowly...%n");
+      result.format("Time is out! Something went wrong...%n");
+    } else if (cause instanceof AssertionError || cause instanceof TestAbortedException) {
+      var message = cause.getMessage();
+      if (message != null && !message.isBlank()) {
+        result.a(message.trim());
+      } else {
+        result.a("Error message is not provided");
+      }
     } else {
       result.format("Thrown unexpected %s", cause.getClass().getName());
       var message = cause.getMessage();

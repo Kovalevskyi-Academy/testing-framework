@@ -6,7 +6,7 @@
 
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
-  <version>3.9-SNAPSHOT</version>
+  <version>4</version>
 
   <properties>
     <javaVersion>13</javaVersion>
@@ -159,9 +159,9 @@
       <version>2.1.1</version>
     </dependency>
     <dependency>
-      <groupId>org.reflections</groupId>
+      <groupId>academy.kovalevskyi</groupId>
       <artifactId>reflections</artifactId>
-      <version>0.9.12</version>
+      <version>0.9.13</version>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>

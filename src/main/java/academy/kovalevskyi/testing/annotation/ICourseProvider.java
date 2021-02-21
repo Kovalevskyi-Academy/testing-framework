@@ -1,28 +1,21 @@
 package academy.kovalevskyi.testing.annotation;
 
 /**
- * Provides some basic information about a course.
+ * Provides important information about some course.
  */
 public interface ICourseProvider {
 
   /**
    * Course full name.
    *
-   * @return name
+   * @return name of course
    */
   String name();
 
   /**
    * Course unique key.
    *
-   * @return uniqueId
+   * @return key of course
    */
   String key();
-
-  /**
-   * Course unique id.
-   *
-   * @return id
-   */
-  int id();
 }

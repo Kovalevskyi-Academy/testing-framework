@@ -1,11 +1,14 @@
-package academy.kovalevskyi.testing.view;
+package academy.kovalevskyi.testing.service;
 
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Stream;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -21,7 +24,7 @@ import org.opentest4j.TestAbortedException;
 /**
  * This handler makes beautiful console output for JUnit tests.
  */
-public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCallback,
+public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAllCallback,
     BeforeEachCallback, AfterEachCallback, ExecutionCondition {
 
   private int successful = 0;
@@ -35,21 +38,44 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   private String containerName;
   private String testName;
   private String repeatedTestSummary;
-  private PrintStream defaultPrintStream;
-  private PrintStream defaultErrorPrintStream;
+  private PrintStream defaultStdout;
+  private PrintStream defaultStderr;
   private PrintStream gagPrintStream;
   private boolean repeatedTest;
   private boolean abortedRepeatedTest;
   private boolean noClassDef;
-  private static boolean errorMode;
+  private boolean errorMode;
 
   /**
-   * Enables error mode to print to console only failed methods.
+   * Provides an Optional value of any {@link Throwable} instance from chain of throwable.
    *
-   * @param flag true is enabled
+   * @param chain     chain of throwable
+   * @param exception any heir class of {@link Throwable}
+   * @return an Optional of instance of class or an empty Optional
    */
-  public static void setErrorMode(final boolean flag) {
-    errorMode = flag;
+  public static Optional<? extends Throwable> getExceptionFromThrowableChain(
+      final Throwable chain,
+      final Class<? extends Throwable> exception) {
+    return Stream
+        .iterate(chain, Objects::nonNull, Throwable::getCause)
+        .dropWhile(throwable -> !throwable.getClass().equals(exception))
+        .findFirst();
+  }
+
+  /**
+   * Provides an error message of {@link NoClassDefFoundError}.
+   *
+   * @param error {@link NoClassDefFoundError} instance
+   * @return prepared error message
+   */
+  public static String getReason(final NoClassDefFoundError error) {
+    final var result = new StringJoiner("\n");
+    result.add(String.format("\rZeus can not find '%s'", error.getMessage()));
+    result.add("Reasons:");
+    result.add("- your jar file is absent in the classpath");
+    result.add("- class is absent in your jar file");
+    result.add("- structure of the project is not default");
+    return result.toString();
   }
 
   /**
@@ -60,10 +86,13 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
+    errorMode = Boolean.parseBoolean(System.getProperty(IFrameworkProperty.ERROR_MODE));
     containerName = context.getDisplayName();
-    defaultPrintStream = System.out;
-    defaultErrorPrintStream = System.err;
+    defaultStdout = System.out;
+    defaultStderr = System.err;
     gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
+    System.setOut(gagPrintStream);
+    System.setErr(gagPrintStream);
     if (!errorMode) {
       printHeader();
     }
@@ -71,8 +100,8 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
 
   /**
    * Evaluates to determine if a given container or test should be executed based on the supplied
-   * ExtensionContext. Provides additional behavior to each entry in the test container before it is
-   * invoked.
+   * {@link ExtensionContext}. Provides additional behavior to each entry in the test container
+   * before it is invoked.
    *
    * @param context the current extension context
    * @return factory for creating enabled results
@@ -92,7 +121,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     } else if (entryUniqueId.matches("^.*\\[test-template-invocation:#\\d*]$")) {
       repeatedTestInvocations++;
     }
-    return ConditionEvaluationResult.enabled("For printing results of tests to console");
+    return ConditionEvaluationResult.enabled("For printing result of test to console");
   }
 
   /**
@@ -106,7 +135,6 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     timer.schedule(createTimer(), 15_000);
     testName = String.format("%s()", context.getRequiredTestMethod().getName());
     printEntry(State.RUNNING);
-    disableConsolePrints();
     beginning = System.currentTimeMillis();
   }
 
@@ -119,7 +147,6 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
   public void afterEach(ExtensionContext context) {
     time += System.currentTimeMillis() - beginning;
     timer.cancel();
-    enableConsolePrints();
   }
 
   /**
@@ -160,11 +187,10 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     if (repeatedTest) {
       failedRepeatedTestInvocations++;
     }
-    final var clazz = cause.getClass();
-    if (clazz.equals(NoClassDefFoundError.class)) {
+    if (getExceptionFromThrowableChain(cause, NoClassDefFoundError.class).isPresent()) {
       printEntry(State.NO_CLASS, cause);
       noClassDef = true;
-    } else if (clazz.equals(NoSuchMethodError.class)) {
+    } else if (getExceptionFromThrowableChain(cause, NoSuchMethodError.class).isPresent()) {
       printEntry(State.NO_METHOD, cause);
     } else {
       printEntry(State.FAILED, cause);
@@ -181,44 +207,21 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     printSummary();
     final var errors = failed + aborted;
     if (!errorMode || errors > 0) {
-      System.out.println(underline(prepareFooter()));
+      defaultStdout.println(underline(prepareFooter()));
     } else if (errors == 0) {
-      System.out.printf(
+      defaultStdout.printf(
           "\r%s is done successfully in %s!%n",
           context.getDisplayName(),
           prepareDuration());
     }
     AnsiConsole.systemUninstall();
-  }
-
-  /**
-   * Provides an error message of NoClassDefFoundError.
-   *
-   * @param error NoClassDefFoundError instance
-   * @return prepared error message
-   */
-  public static String getReason(final NoClassDefFoundError error) {
-    final var result = new StringJoiner("\n");
-    result.add(String.format("\rZeus can not find '%s'", error.getMessage()));
-    result.add("Reasons:");
-    result.add("- your jar file is absent in the classpath");
-    result.add("- class is absent in your jar file");
-    result.add("- structure of the project is not default");
-    return result.toString();
-  }
-
-  private void enableConsolePrints() {
-    System.setOut(defaultPrintStream);
-    System.setErr(defaultErrorPrintStream);
-  }
-
-  private void disableConsolePrints() {
-    System.setOut(gagPrintStream);
-    System.setErr(gagPrintStream);
+    System.setOut(defaultStdout);
+    System.setErr(defaultStderr);
+    gagPrintStream.close();
   }
 
   private void printHeader() {
-    System.out.printf("\rResult of %s:%n%n", containerName);
+    defaultStdout.printf("\rResult of %s:%n%n", containerName);
   }
 
   private void printEntry(final State state) {
@@ -229,12 +232,12 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
           printHeader();
         }
         if (errors == 0) {
-          System.out.printf("\r%s -> %s", containerName, testName);
+          defaultStdout.printf("\r%s -> %s", containerName, testName);
         } else {
-          System.out.printf("\r%s", testName);
+          defaultStdout.printf("\r%s", testName);
         }
       } else {
-        System.out.printf("\r%s", testName);
+        defaultStdout.printf("\r%s", testName);
       }
       if (repeatedTest) {
         repeatedTestSummary = prepareSummary(
@@ -242,15 +245,15 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
             state,
             failedRepeatedTestInvocations,
             repeatedTestInvocations);
-        System.out.printf(" test %d", repeatedTestInvocations);
+        defaultStdout.printf(" test %d", repeatedTestInvocations);
       }
       var status = prepareStatus(state);
       if (state == State.RUNNING) {
-        System.out.print(status);
+        defaultStdout.print(status);
       } else if (state == State.FAILED || state == State.INTERRUPTED || (!repeatedTest
           && (state == State.ABORTED || state == State.NO_METHOD
           || (!errorMode && state == State.SUCCESSFUL)))) {
-        System.out.println(status);
+        defaultStdout.println(status);
       }
     }
   }
@@ -261,7 +264,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
       if (repeatedTest && (state == State.NO_METHOD || state == State.ABORTED)) {
         repeatedTestSummary += String.format("%n%s", prepareReason(state, cause));
       } else {
-        System.out.println(prepareReason(state, cause));
+        defaultStdout.println(prepareReason(state, cause));
       }
     }
   }
@@ -270,7 +273,7 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
     if (!noClassDef) {
       final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
       if (repeatedTest && successful != 0 && (!errorMode || abortedRepeatedTest)) {
-        System.out.println(repeatedTestSummary);
+        defaultStdout.println(repeatedTestSummary);
       }
     }
   }
@@ -332,14 +335,22 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
 
   private String prepareReason(final State state, final Throwable cause) {
     final var result = Ansi.ansi().fg(state.color);
-    if (cause instanceof AssertionError || cause.getClass().equals(TestAbortedException.class)) {
-      result.a(cause.getMessage().trim());
-    } else if (state == State.NO_CLASS) {
+    if (state == State.NO_CLASS) {
       result.a(getReason((NoClassDefFoundError) cause));
     } else if (state == State.NO_METHOD) {
-      result.format("%s is absent in your class!", cause.getMessage());
+      result.format("%s%n", cause.getMessage().trim());
+      result.format("Reasons:%n");
+      result.format("- method is absent%n");
+      result.format("- signature of method is different");
     } else if (state == State.INTERRUPTED) {
-      result.format("Time is out! Looks like an infinity loop or your method is so slowly...%n");
+      result.format("Time is out! Something went wrong...%n");
+    } else if (cause instanceof AssertionError || cause instanceof TestAbortedException) {
+      var message = cause.getMessage();
+      if (message != null && !message.isBlank()) {
+        result.a(message.trim());
+      } else {
+        result.a("Error message is not provided");
+      }
     } else {
       result.format("Thrown unexpected %s", cause.getClass().getName());
       var message = cause.getMessage();
@@ -356,7 +367,6 @@ public class TestHandler implements TestWatcher, BeforeAllCallback, AfterAllCall
 
       @Override
       public void run() {
-        enableConsolePrints();
         printEntry(State.INTERRUPTED, new TimeoutException());
         System.exit(0);
       }

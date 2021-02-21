@@ -6,7 +6,7 @@
 
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
-  <version>5</version>
+  <version>6-SNAPSHOT</version>
 
   <properties>
     <java.version>13</java.version>

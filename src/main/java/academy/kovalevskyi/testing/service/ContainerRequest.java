@@ -9,7 +9,7 @@ import java.util.function.Predicate;
 /**
  * Custom request which can filter container classes by course/week/day/id.
  */
-public class ContainerRequest implements IRequest {
+public class ContainerRequest implements Request {
 
   private final Predicate<Class<?>> predicate;
 

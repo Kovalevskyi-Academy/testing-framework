@@ -1,6 +1,6 @@
 package academy.kovalevskyi.testing.service;
 
-public interface IFrameworkProperty {
+public interface FrameworkProperty {
 
   String ERROR_MODE = "testingFramework.errorMode";
 }

@@ -1,11 +1,11 @@
 package academy.kovalevskyi.testing.util;
 
 import academy.kovalevskyi.testing.annotation.Container;
-import academy.kovalevskyi.testing.annotation.ICourseProvider;
+import academy.kovalevskyi.testing.annotation.CourseProvider;
 import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
 import academy.kovalevskyi.testing.service.BaseComparator;
-import academy.kovalevskyi.testing.service.IRequest;
+import academy.kovalevskyi.testing.service.Request;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -44,7 +44,7 @@ public class ContainerManager {
    * @return list of test classes
    * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<?>> getContainers(final IRequest request) {
+  public static List<Class<?>> getContainers(final Request request) {
     final var result = CONTAINERS
         .stream()
         .filter(request.getPredicate())
@@ -58,26 +58,26 @@ public class ContainerManager {
   }
 
   /**
-   * Extracts an instance of {@link ICourseProvider} implementation from class witch is annotated
+   * Extracts an instance of {@link CourseProvider} implementation from class witch is annotated
    * with {@link Container} annotation.
    *
    * @param clazz test class
-   * @return instance of {@link ICourseProvider}
+   * @return instance of {@link CourseProvider}
    * @throws ExceptionInInitializerError some edge situations
    */
-  public static ICourseProvider initProvider(final Class<?> clazz) {
+  public static CourseProvider initProvider(final Class<?> clazz) {
     return initProvider(getAnnotation(clazz));
   }
 
   /**
-   * Extracts an instance of {@link ICourseProvider} implementation from class witch is annotated
+   * Extracts an instance of {@link CourseProvider} implementation from class witch is annotated
    * with {@link Container} annotation.
    *
    * @param annotation {@link Container} instance
-   * @return instance of {@link ICourseProvider}
+   * @return instance of {@link CourseProvider}
    * @throws ExceptionInInitializerError some edge situations
    */
-  public static ICourseProvider initProvider(final Container annotation) {
+  public static CourseProvider initProvider(final Container annotation) {
     try {
       return annotation.course().getConstructor().newInstance();
     } catch (NoSuchMethodException

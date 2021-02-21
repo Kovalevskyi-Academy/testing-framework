@@ -5,7 +5,7 @@ import java.util.function.Predicate;
 /**
  * Services to filter test classes.
  */
-public interface IRequest {
+public interface Request {
 
   Predicate<Class<?>> getPredicate();
 }

@@ -19,9 +19,9 @@ public @interface Container {
   /**
    * Class which provides some important information of course.
    *
-   * @return any class which implements {@link ICourseProvider}
+   * @return any class which implements {@link CourseProvider}
    */
-  Class<? extends ICourseProvider> course();
+  Class<? extends CourseProvider> course();
 
   /**
    * Provides week number of container.

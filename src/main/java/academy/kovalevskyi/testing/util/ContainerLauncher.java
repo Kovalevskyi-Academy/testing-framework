@@ -5,7 +5,7 @@ import static org.junit.platform.engine.discovery.DiscoverySelectors.selectClass
 import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.service.ContainerHandler;
 import academy.kovalevskyi.testing.service.ContainerRequest;
-import academy.kovalevskyi.testing.service.IFrameworkProperty;
+import academy.kovalevskyi.testing.service.FrameworkProperty;
 import academy.kovalevskyi.testing.service.State;
 import java.util.List;
 import org.fusesource.jansi.Ansi;
@@ -81,6 +81,6 @@ public class ContainerLauncher {
   }
 
   private static void setErrorMode(boolean errorMode) {
-    System.setProperty(IFrameworkProperty.ERROR_MODE, String.valueOf(errorMode));
+    System.setProperty(FrameworkProperty.ERROR_MODE, String.valueOf(errorMode));
   }
 }

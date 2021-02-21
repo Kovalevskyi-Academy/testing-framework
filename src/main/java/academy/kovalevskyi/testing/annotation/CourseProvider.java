@@ -3,7 +3,7 @@ package academy.kovalevskyi.testing.annotation;
 /**
  * Provides important information about some course.
  */
-public interface ICourseProvider {
+public interface CourseProvider {
 
   /**
    * Course full name.

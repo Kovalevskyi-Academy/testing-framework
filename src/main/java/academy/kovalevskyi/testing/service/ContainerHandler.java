@@ -110,9 +110,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
     final var entryUniqueId = context.getUniqueId();
     if (entryUniqueId.matches("^.*\\[method:.*\\)]$")) {
+      testName = prepareTestName(context);
       printSummary();
       repeatedTest = false;
     } else if (entryUniqueId.matches("^.*\\[test-template:.*\\)]$")) {
+      testName = prepareTestName(context);
       printSummary();
       repeatedTest = true;
       abortedRepeatedTest = false;
@@ -133,7 +135,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   public void beforeEach(ExtensionContext context) {
     timer = new Timer(true);
     timer.schedule(createTimer(), 15_000);
-    testName = String.format("%s()", context.getRequiredTestMethod().getName());
     printEntry(State.RUNNING);
     beginning = System.currentTimeMillis();
   }
@@ -276,6 +277,12 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
         defaultStdout.println(repeatedTestSummary);
       }
     }
+  }
+
+  private String prepareTestName(final ExtensionContext context) {
+    final var name = context.getDisplayName();
+    final var match = name.matches("^.+\\(.*$");
+    return String.format("%s()", match ? name.substring(0, name.indexOf('(')) : name);
   }
 
   private String prepareFooter() {

@@ -8,6 +8,8 @@ import academy.kovalevskyi.testing.service.BaseComparator;
 import academy.kovalevskyi.testing.service.Request;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import org.reflections.Reflections;
 
@@ -16,11 +18,12 @@ import org.reflections.Reflections;
  */
 public class ContainerManager {
 
-  private static final List<Class<?>> CONTAINERS;
+  private static final Set<Class<?>> CONTAINERS;
   private static final String COURSE_PACKAGE = "academy.kovalevskyi";
 
   static {
-    CONTAINERS = initialize();
+    CONTAINERS = new TreeSet<>(new BaseComparator());
+    CONTAINERS.addAll(new Reflections(COURSE_PACKAGE).getTypesAnnotatedWith(Container.class));
   }
 
   /**
@@ -34,7 +37,7 @@ public class ContainerManager {
       throw new ContainerNotFoundException("No available containers");
     }
 
-    return CONTAINERS;
+    return CONTAINERS.stream().collect(Collectors.toUnmodifiableList());
   }
 
   /**
@@ -103,15 +106,5 @@ public class ContainerManager {
     }
 
     return clazz.getAnnotation(Container.class);
-  }
-
-  private static List<Class<?>> initialize() {
-    final var jcbPackage = "com.kovalevskyi.academy.codingbootcamp"; // TODO remove it later
-
-    return new Reflections(COURSE_PACKAGE, jcbPackage)
-        .getTypesAnnotatedWith(Container.class)
-        .stream()
-        .sorted(new BaseComparator())
-        .collect(Collectors.toUnmodifiableList());
   }
 }

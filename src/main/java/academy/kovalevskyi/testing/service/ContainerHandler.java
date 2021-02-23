@@ -27,9 +27,14 @@ import org.opentest4j.TestAbortedException;
 public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAllCallback,
     BeforeEachCallback, AfterEachCallback, ExecutionCondition {
 
+  static {
+    System.setProperty("com.google.common.truth.disable_stack_trace_cleaning", "true");
+  }
+
   private int successful = 0;
   private int failed = 0;
   private int aborted = 0;
+  private int disabled = 0;
   private int repeatedTestInvocations = 0;
   private int failedRepeatedTestInvocations = 0;
   private long time = 0;
@@ -38,13 +43,22 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private String containerName;
   private String testName;
   private String repeatedTestSummary;
-  private PrintStream defaultStdout;
-  private PrintStream defaultStderr;
-  private PrintStream gagPrintStream;
   private boolean repeatedTest;
   private boolean abortedRepeatedTest;
   private boolean noClassDef;
   private boolean errorMode;
+  private final PrintStream defaultStdout;
+  private final PrintStream defaultStderr;
+  private final PrintStream gagPrintStream;
+  private final boolean debugMode;
+
+  public ContainerHandler() {
+    errorMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.ERROR_MODE));
+    debugMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.DEBUG_MODE));
+    gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
+    defaultStdout = System.out;
+    defaultStderr = System.err;
+  }
 
   /**
    * Provides an Optional value of any {@link Throwable} instance from chain of throwable.
@@ -86,13 +100,13 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
-    errorMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.ERROR_MODE));
-    containerName = context.getDisplayName();
-    defaultStdout = System.out;
-    defaultStderr = System.err;
-    gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
-    System.setOut(gagPrintStream);
+    if (debugMode) {
+      errorMode = false;
+    } else {
+      System.setOut(gagPrintStream);
+    }
     System.setErr(gagPrintStream);
+    containerName = context.getDisplayName();
     if (!errorMode) {
       printHeader();
     }
@@ -109,18 +123,18 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
     final var entryUniqueId = context.getUniqueId();
-    if (entryUniqueId.matches("^.*\\[method:.*\\)]$")) {
+    if (entryUniqueId.matches("^.+\\[method:.+\\)]$")) {
       testName = prepareTestName(context);
       printSummary();
       repeatedTest = false;
-    } else if (entryUniqueId.matches("^.*\\[test-template:.*\\)]$")) {
+    } else if (entryUniqueId.matches("^.+\\[test-template:.+\\)]$")) {
       testName = prepareTestName(context);
       printSummary();
       repeatedTest = true;
       abortedRepeatedTest = false;
       repeatedTestInvocations = 0;
       failedRepeatedTestInvocations = 0;
-    } else if (entryUniqueId.matches("^.*\\[test-template-invocation:#\\d*]$")) {
+    } else if (entryUniqueId.matches("^.+\\[test-template-invocation:#\\d+]$")) {
       repeatedTestInvocations++;
     }
     return ConditionEvaluationResult.enabled("For printing result of test to console");
@@ -177,6 +191,17 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   }
 
   /**
+   * Invoked after a test has been disabled.
+   *
+   * @param context the current extension context
+   * @param reason  the reason that test was disabled
+   */
+  @Override
+  public void testDisabled(ExtensionContext context, Optional<String> reason) {
+    disabled++;
+  }
+
+  /**
    * Invoked after a test has failed.
    *
    * @param context the current extension context
@@ -216,7 +241,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
           prepareDuration());
     }
     AnsiConsole.systemUninstall();
-    System.setOut(defaultStdout);
+    if (!debugMode) {
+      System.setOut(defaultStdout);
+    }
     System.setErr(defaultStderr);
     gagPrintStream.close();
   }
@@ -251,6 +278,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       var status = prepareStatus(state);
       if (state == State.RUNNING) {
         defaultStdout.print(status);
+        if (debugMode) {
+          defaultStdout.printf("%n");
+        }
       } else if (state == State.FAILED || state == State.INTERRUPTED || (!repeatedTest
           && (state == State.ABORTED || state == State.NO_METHOD
           || (!errorMode && state == State.SUCCESSFUL)))) {
@@ -287,7 +317,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
 
   private String prepareFooter() {
     final var result = new StringJoiner(" | ");
-    result.add(String.format("\r %nTOTAL %d", successful + failed + aborted));
+    result.add(String.format("\r %nTOTAL %d", successful + failed + aborted + disabled));
     if (successful > 0) {
       result.add(String.format("SUCCESSFUL %d", successful));
     }
@@ -296,6 +326,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     }
     if (aborted > 0) {
       result.add(String.format("ABORTED %d", aborted));
+    }
+    if (disabled > 0) {
+      result.add(String.format("DISABLED %d", disabled));
     }
     return result.add(String.format("TIME %s", prepareDuration())).toString();
   }

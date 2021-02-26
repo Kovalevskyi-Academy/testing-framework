@@ -45,7 +45,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private String testName;
   private String repeatedTestSummary;
   private boolean repeatedTest;
-  private boolean abortedRepeatedTest;
   private boolean noClassDef;
   private boolean errorMode;
   private final PrintStream defaultStdout;
@@ -132,7 +131,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       testName = prepareTestName(context);
       printSummary();
       repeatedTest = true;
-      abortedRepeatedTest = false;
       repeatedTestInvocations = 0;
       failedRepeatedTestInvocations = 0;
     } else if (entryUniqueId.matches("^.+\\[test-template-invocation:#\\d+]$")) {
@@ -186,7 +184,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   public void testAborted(ExtensionContext context, Throwable cause) {
     aborted++;
     if (repeatedTest) {
-      abortedRepeatedTest = true;
+      failedRepeatedTestInvocations++;
     }
     printEntry(State.ABORTED, cause);
   }
@@ -283,7 +281,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
           result.append(System.lineSeparator());
         }
       } else if (state == State.FAILED || state == State.INTERRUPTED || state == State.DISABLED
-          || (!repeatedTest && (state == State.ABORTED || state == State.NO_METHOD
+          || state == State.ABORTED || (!repeatedTest && (state == State.NO_METHOD
           || (!errorMode && state == State.SUCCESSFUL)))) {
         result.append(String.format("%s%n", status));
       }
@@ -298,7 +296,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private void printEntry(final State state, final Throwable cause) {
     if (!noClassDef) {
       printEntry(state);
-      if (repeatedTest && (state == State.NO_METHOD || state == State.ABORTED)) {
+      if (repeatedTest && state == State.NO_METHOD) {
         repeatedTestSummary += String.format("%n%s", prepareReason(state, cause));
       } else {
         defaultStdout.println(prepareReason(state, cause));
@@ -309,7 +307,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private void printSummary() {
     if (!noClassDef) {
       final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
-      if (repeatedTest && successful != 0 && (!errorMode || abortedRepeatedTest)) {
+      if (repeatedTest && successful != 0 && !errorMode) {
         clearLastLine();
         defaultStdout.println(repeatedTestSummary);
       }

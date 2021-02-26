@@ -102,10 +102,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     AnsiConsole.systemInstall();
     if (debugMode) {
       errorMode = false;
+      System.setErr(defaultStdout);
     } else {
       System.setOut(gagPrintStream);
+      System.setErr(gagPrintStream);
     }
-    System.setErr(gagPrintStream);
     containerName = context.getDisplayName();
     if (!errorMode) {
       defaultStdout.print(prepareHeader());
@@ -243,9 +244,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
           prepareDuration());
     }
     AnsiConsole.systemUninstall();
-    if (!debugMode) {
-      System.setOut(defaultStdout);
-    }
+    System.setOut(defaultStdout);
     System.setErr(defaultStderr);
     gagPrintStream.close();
   }
@@ -281,7 +280,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
           result.append(System.lineSeparator());
         }
       } else if (state == State.FAILED || state == State.INTERRUPTED || state == State.DISABLED
-          || state == State.ABORTED || (!repeatedTest && (state == State.NO_METHOD
+          || state == State.ABORTED || debugMode || (!repeatedTest && (state == State.NO_METHOD
           || (!errorMode && state == State.SUCCESSFUL)))) {
         result.append(String.format("%s%n", status));
       }
@@ -305,7 +304,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   }
 
   private void printSummary() {
-    if (!noClassDef) {
+    if (!noClassDef && !debugMode) {
       final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
       if (repeatedTest && successful != 0 && !errorMode) {
         clearLastLine();

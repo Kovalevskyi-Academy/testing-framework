@@ -37,6 +37,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private int disabled = 0;
   private int repeatedTestInvocations = 0;
   private int failedRepeatedTestInvocations = 0;
+  private int lastPrintedLineLength = 0;
   private long time = 0;
   private long beginning;
   private Timer timer;
@@ -83,8 +84,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
    * @return prepared error message
    */
   public static String getReason(final NoClassDefFoundError error) {
-    final var result = new StringJoiner("\n");
-    result.add(String.format("\rZeus can not find '%s'", error.getMessage()));
+    final var result = new StringJoiner(System.lineSeparator());
+    result.add(String.format("Zeus can not find '%s'", error.getMessage()));
     result.add("Reasons:");
     result.add("- your jar file is absent in the classpath");
     result.add("- class is absent in your jar file");
@@ -108,7 +109,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     System.setErr(gagPrintStream);
     containerName = context.getDisplayName();
     if (!errorMode) {
-      printHeader();
+      defaultStdout.print(prepareHeader());
     }
   }
 
@@ -199,6 +200,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void testDisabled(ExtensionContext context, Optional<String> reason) {
     disabled++;
+    testName = prepareTestName(context);
+    printEntry(State.DISABLED);
   }
 
   /**
@@ -231,12 +234,13 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void afterAll(ExtensionContext context) {
     printSummary();
-    final var errors = failed + aborted;
+    clearLastLine();
+    final var errors = failed + aborted + disabled;
     if (!errorMode || errors > 0) {
       defaultStdout.println(underline(prepareFooter()));
     } else if (errors == 0) {
       defaultStdout.printf(
-          "\r%s is done successfully in %s!%n",
+          "%s is done successfully in %s!%n",
           context.getDisplayName(),
           prepareDuration());
     }
@@ -248,24 +252,21 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     gagPrintStream.close();
   }
 
-  private void printHeader() {
-    defaultStdout.printf("\rResult of %s:%n%n", containerName);
-  }
-
   private void printEntry(final State state) {
     if (!noClassDef) {
+      final var result = new StringBuilder();
       if (errorMode) {
-        var errors = failed + aborted;
+        var errors = failed + aborted + disabled;
         if (errors == 1 && (state != State.SUCCESSFUL && state != State.RUNNING)) {
-          printHeader();
+          result.append(prepareHeader());
         }
         if (errors == 0) {
-          defaultStdout.printf("\r%s -> %s", containerName, testName);
+          result.append(String.format("%s -> %s", containerName, testName));
         } else {
-          defaultStdout.printf("\r%s", testName);
+          result.append(String.format("%s", testName));
         }
       } else {
-        defaultStdout.printf("\r%s", testName);
+        result.append(String.format("%s", testName));
       }
       if (repeatedTest) {
         repeatedTestSummary = prepareSummary(
@@ -273,19 +274,24 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
             state,
             failedRepeatedTestInvocations,
             repeatedTestInvocations);
-        defaultStdout.printf(" test %d", repeatedTestInvocations);
+        result.append(String.format(" test %d", repeatedTestInvocations));
       }
       var status = prepareStatus(state);
       if (state == State.RUNNING) {
-        defaultStdout.print(status);
+        result.append(status);
         if (debugMode) {
-          defaultStdout.printf("%n");
+          result.append(System.lineSeparator());
         }
-      } else if (state == State.FAILED || state == State.INTERRUPTED || (!repeatedTest
-          && (state == State.ABORTED || state == State.NO_METHOD
+      } else if (state == State.FAILED || state == State.INTERRUPTED || state == State.DISABLED
+          || (!repeatedTest && (state == State.ABORTED || state == State.NO_METHOD
           || (!errorMode && state == State.SUCCESSFUL)))) {
-        defaultStdout.println(status);
+        result.append(String.format("%s%n", status));
       }
+      if (result.length() > lastPrintedLineLength) {
+        lastPrintedLineLength = result.length();
+      }
+      clearLastLine();
+      defaultStdout.print(result);
     }
   }
 
@@ -304,9 +310,18 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     if (!noClassDef) {
       final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
       if (repeatedTest && successful != 0 && (!errorMode || abortedRepeatedTest)) {
+        clearLastLine();
         defaultStdout.println(repeatedTestSummary);
       }
     }
+  }
+
+  private void clearLastLine() {
+    defaultStdout.print("\b".repeat(lastPrintedLineLength));
+  }
+
+  private String prepareHeader() {
+    return String.format("Result of %s:%n%n", containerName);
   }
 
   private String prepareTestName(final ExtensionContext context) {
@@ -317,7 +332,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
 
   private String prepareFooter() {
     final var result = new StringJoiner(" | ");
-    result.add(String.format("\r %nTOTAL %d", successful + failed + aborted + disabled));
+    result.add(String.format("%nTOTAL %d", successful + failed + aborted + disabled));
     if (successful > 0) {
       result.add(String.format("SUCCESSFUL %d", successful));
     }
@@ -338,7 +353,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       final State state,
       final int failed,
       final int total) {
-    final var result = new StringBuilder().append('\r').append(name);
+    final var result = new StringBuilder().append(name);
     final var successful = total - failed;
     if (total > 1 && (failed == 0 || successful == 0)) {
       result.append(String.format(" %d tests", total));

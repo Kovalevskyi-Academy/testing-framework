@@ -356,12 +356,16 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     if (total > 1 && (failed == 0 || successful == 0)) {
       result.append(String.format(" %d tests", total));
     }
-    if (state != State.SUCCESSFUL && state != State.FAILED) {
+    if (state != State.SUCCESSFUL && state != State.FAILED && state != State.ABORTED) {
       result.append(prepareStatus(state));
     } else if (failed == 0) {
       result.append(prepareStatus(State.SUCCESSFUL));
     } else if (successful == 0) {
-      result.append(prepareStatus(State.FAILED));
+      if (state == State.ABORTED) {
+        result.append(prepareStatus(State.ABORTED));
+      } else {
+        result.append(prepareStatus(State.FAILED));
+      }
     } else {
       var suffix = successful > 1 ? "s" : "";
       result.append(String.format(" %d test%s of %d", successful, suffix, total));

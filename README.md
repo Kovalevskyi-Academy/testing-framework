@@ -1,10 +1,20 @@
-## testing framework
-There are several basic classes that define the global behavior for all inherited tests:
-- TestHandler is needed for a beautiful display of the results of each test;
-- AbstractTestExecutor is a required ancestor for all tests, which allows you to run tests from code. Also, this class sets a global limit on the execution time of each test;
-- BasicStdTest heir to AbstractTestExecutor, allows you to intercept messages displayed on the screen in tested methods in each test.
-___
-Здесь находится несколько базовых классов, которые задают глобально поведение для всех тестов-наследников:
-- TestHandler нужен для красивого вывода результатов работы каждого теста;
-- AbstractTestExecutor является обязательным предком для всех тестов, что позволяет запускать тесты из кода. Также этот класс задает глобальное ограничение на время выполнения каждого теста;
-- BasicStdTest наследник AbstractTestExecutor, позволяет перехватывать в каждом тесте выводимые сообщения на экран в тестируемых методах.
+# Testing framework
+###This framework makes beautiful console output for JUnit tests
+## How to use:
+> ### academy.kovalevskyi.testing.service.AbstractStdCaptor
+>
+> This class can be used for all tests that are going to intercept what will be displayed in the
+> method under test.
+
+> ### academy.kovalevskyi.testing.annotation.Container
+> 
+> Serves for marking test classes. All test classes should be annotated with this annotation
+> to work with Testing Framework.
+
+> ### academy.kovalevskyi.testing.util.ContainerManager
+> 
+> Provides all available test containers.
+
+> ### academy.kovalevskyi.testing.util.ContainerLauncher
+> 
+> Launches test containers.

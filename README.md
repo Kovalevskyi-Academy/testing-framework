@@ -1,5 +1,5 @@
 # Testing framework
-This framework makes beautiful console output for JUnit tests.
+This framework makes beautiful console output for JUnit tests
 ## How to use:
 ### academy.kovalevskyi.testing.service.AbstractStdCaptor
 > This class can be used for all tests that are going to intercept what will be displayed in the

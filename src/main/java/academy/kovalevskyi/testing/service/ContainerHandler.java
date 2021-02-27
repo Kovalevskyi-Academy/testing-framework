@@ -27,8 +27,13 @@ import org.opentest4j.TestAbortedException;
 public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAllCallback,
     BeforeEachCallback, AfterEachCallback, ExecutionCondition {
 
-  static {
+  {
     System.setProperty("com.google.common.truth.disable_stack_trace_cleaning", "true");
+    errorMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.ERROR_MODE));
+    debugMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.DEBUG_MODE));
+    gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
+    defaultStdout = System.out;
+    defaultStderr = System.err;
   }
 
   private int successful = 0;
@@ -51,14 +56,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private final PrintStream defaultStderr;
   private final PrintStream gagPrintStream;
   private final boolean debugMode;
-
-  public ContainerHandler() {
-    errorMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.ERROR_MODE));
-    debugMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.DEBUG_MODE));
-    gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
-    defaultStdout = System.out;
-    defaultStderr = System.err;
-  }
 
   /**
    * Provides an Optional value of any {@link Throwable} instance from chain of throwable.

@@ -16,7 +16,7 @@ public abstract class AbstractStdCaptor {
   private final PrintStream defaultStdout;
   private final PrintStream defaultStderr;
 
-  public AbstractStdCaptor() {
+  {
     outputStreamCaptor = new ByteArrayOutputStream();
     errorStreamCaptor = new ByteArrayOutputStream();
     defaultStdout = System.out;
@@ -31,8 +31,6 @@ public abstract class AbstractStdCaptor {
 
   @AfterEach
   public void setUpDefaultOutput() {
-    outputStreamCaptor.reset();
-    errorStreamCaptor.reset();
     System.out.close();
     System.err.close();
     System.setOut(defaultStdout);

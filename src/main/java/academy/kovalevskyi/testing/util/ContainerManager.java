@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 import org.reflections.Reflections;
 
 /**
- * Provides all available courses from package {@value COURSE_PACKAGE}.
+ * Provides all available test containers from package {@value COURSE_PACKAGE}.
  */
 public class ContainerManager {
 

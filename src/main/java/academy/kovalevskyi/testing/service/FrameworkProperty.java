@@ -1,5 +1,8 @@
 package academy.kovalevskyi.testing.service;
 
+/**
+ * Properties container.
+ */
 public interface FrameworkProperty {
 
   String ERROR_MODE = "academy.kovalevskyi.testing.errorMode";

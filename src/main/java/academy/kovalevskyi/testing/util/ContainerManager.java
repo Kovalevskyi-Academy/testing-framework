@@ -16,7 +16,7 @@ import org.reflections.Reflections;
 /**
  * Provides all available test containers from package {@value COURSE_PACKAGE}.
  */
-public class ContainerManager {
+public final class ContainerManager {
 
   private static final Set<Class<?>> CONTAINERS;
   private static final String COURSE_PACKAGE = "academy.kovalevskyi";

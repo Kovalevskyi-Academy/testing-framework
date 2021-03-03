@@ -16,7 +16,7 @@ import org.junit.platform.launcher.core.LauncherFactory;
 /**
  * Launches test containers.
  */
-public class ContainerLauncher {
+public final class ContainerLauncher {
 
   /**
    * Launches test containers programmatically with JUnit engine.

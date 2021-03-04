@@ -7,6 +7,7 @@ import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
 import org.fusesource.jansi.Ansi;
@@ -34,6 +35,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     gagPrintStream = new PrintStream(OutputStream.nullOutputStream());
     defaultStdout = System.out;
     defaultStderr = System.err;
+    timeoutSec = 15;
   }
 
   private int successful = 0;
@@ -41,9 +43,13 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private int aborted = 0;
   private int disabled = 0;
   private int repeatedTestInvocations = 0;
+  private int successfulRepeatedTestInvocations = 0;
   private int failedRepeatedTestInvocations = 0;
+  private int abortedRepeatedTestInvocations = 0;
   private int lastPrintedLineLength = 0;
-  private long time = 0;
+  private long totalTime = 0;
+  private long testTime = 0;
+  private long repeatedTestTime = 0;
   private long beginning;
   private Timer timer;
   private String containerName;
@@ -55,6 +61,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private final PrintStream defaultStdout;
   private final PrintStream defaultStderr;
   private final PrintStream gagPrintStream;
+  private final long timeoutSec;
   private final boolean debugMode;
 
   /**
@@ -129,8 +136,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       testName = prepareTestName(context);
       printSummary();
       repeatedTest = true;
+      repeatedTestTime = 0;
       repeatedTestInvocations = 0;
+      successfulRepeatedTestInvocations = 0;
       failedRepeatedTestInvocations = 0;
+      abortedRepeatedTestInvocations = 0;
     } else if (entryUniqueId.matches("^.+\\[test-template-invocation:#\\d+]$")) {
       repeatedTestInvocations++;
     }
@@ -145,9 +155,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void beforeEach(ExtensionContext context) {
     timer = new Timer(true);
-    timer.schedule(createTimer(), 15_000);
+    timer.schedule(createTimer(), timeoutSec * 1_000);
     printEntry(State.RUNNING);
-    beginning = System.currentTimeMillis();
+    beginning = System.nanoTime();
   }
 
   /**
@@ -157,7 +167,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
    */
   @Override
   public void afterEach(ExtensionContext context) {
-    time += System.currentTimeMillis() - beginning;
+    testTime = System.nanoTime() - beginning;
+    totalTime += testTime;
+    if (repeatedTest) {
+      repeatedTestTime += testTime;
+    }
     timer.cancel();
   }
 
@@ -169,6 +183,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void testSuccessful(ExtensionContext context) {
     successful++;
+    if (repeatedTest) {
+      successfulRepeatedTestInvocations++;
+    }
     printEntry(State.SUCCESSFUL);
   }
 
@@ -182,7 +199,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   public void testAborted(ExtensionContext context, Throwable cause) {
     aborted++;
     if (repeatedTest) {
-      failedRepeatedTestInvocations++;
+      abortedRepeatedTestInvocations++;
     }
     printEntry(State.ABORTED, cause);
   }
@@ -237,8 +254,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     } else if (errors == 0) {
       defaultStdout.printf(
           "%s is done successfully in %s!%n",
-          context.getDisplayName(),
-          prepareDuration());
+          containerName,
+          prepareDuration(totalTime));
     }
     AnsiConsole.systemUninstall();
     System.setOut(defaultStdout);
@@ -263,12 +280,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
         result.append(String.format("%s", testName));
       }
       if (repeatedTest) {
-        repeatedTestSummary = prepareSummary(
-            testName,
-            state,
-            failedRepeatedTestInvocations,
-            repeatedTestInvocations);
+        repeatedTestSummary = prepareSummary(state);
         result.append(String.format(" test %d", repeatedTestInvocations));
+      }
+      if (debugMode && state != State.RUNNING) {
+        result.append(prepareTime(testTime));
       }
       result.append(prepareStatus(state));
       if (debugMode
@@ -303,8 +319,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
 
   private void printSummary() {
     if (!noClassDef && !debugMode) {
-      final var successful = repeatedTestInvocations - failedRepeatedTestInvocations;
-      if (repeatedTest && successful != 0 && !errorMode) {
+      if (repeatedTest && successfulRepeatedTestInvocations > 0 && !errorMode) {
         clearLastLine();
         defaultStdout.println(repeatedTestSummary);
       }
@@ -340,32 +355,32 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     if (disabled > 0) {
       result.add(String.format("DISABLED %d", disabled));
     }
-    return result.add(String.format("TIME %s", prepareDuration())).toString();
+    return result.add(String.format("TIME %s", prepareDuration(totalTime))).toString();
   }
 
-  private String prepareSummary(
-      final String name,
-      final State state,
-      final int failed,
-      final int total) {
-    final var result = new StringBuilder().append(name);
-    final var successful = total - failed;
-    if (total > 1 && (failed == 0 || successful == 0)) {
-      result.append(String.format(" %d tests", total));
-    }
-    if (state != State.SUCCESSFUL && state != State.FAILED && state != State.ABORTED) {
-      result.append(prepareStatus(state));
-    } else if (failed == 0) {
-      result.append(prepareStatus(State.SUCCESSFUL));
-    } else if (successful == 0) {
-      if (state == State.ABORTED) {
-        result.append(prepareStatus(State.ABORTED));
-      } else {
-        result.append(prepareStatus(State.FAILED));
+  private String prepareSummary(final State state) {
+    final var result = new StringBuilder().append(testName);
+    if (repeatedTestInvocations == successfulRepeatedTestInvocations
+        || repeatedTestInvocations == abortedRepeatedTestInvocations
+        || repeatedTestInvocations == failedRepeatedTestInvocations) {
+      if (repeatedTestInvocations > 1) {
+        result.append(String.format(" %d tests", repeatedTestInvocations));
       }
+      if (debugMode) {
+        result.append(prepareTime(repeatedTestTime));
+      }
+      result.append(prepareStatus(state));
     } else {
-      var suffix = successful > 1 ? "s" : "";
-      result.append(String.format(" %d test%s of %d", successful, suffix, total));
+      var suffix = successfulRepeatedTestInvocations > 1 ? "s" : "";
+      result.append(
+          String.format(
+              " %d test%s of %d",
+              successfulRepeatedTestInvocations,
+              suffix,
+              repeatedTestInvocations));
+      if (debugMode) {
+        result.append(prepareTime(repeatedTestTime));
+      }
       result.append(prepareStatus(State.SUCCESSFUL));
     }
     return result.toString();
@@ -375,12 +390,25 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     return Ansi.ansi().a(" - ").fg(state.color).a(state.status).reset().toString();
   }
 
-  private String prepareDuration() {
-    final var sec = time / 1000;
-    if (sec > 0) {
-      return String.format("%d sec %d ms", sec, time - (1000 * sec));
+  private String prepareTime(final long ns) {
+    return String.format(" [%s]", prepareDuration(ns));
+  }
+
+  private String prepareDuration(final long ns) {
+    if (ns < 1_000_000) {
+      return String.format("%.2f ms", ns / 1_000_000f);
     }
-    return String.format("%d ms", time);
+    final var ms = ns / 1_000_000f;
+    final var sec = (long) ms / 1_000;
+    if (sec > 0) {
+      var result = new StringJoiner(" ").add(String.format("%d sec", sec));
+      var leftMs = ms - (1_000 * sec);
+      if (leftMs > 0) {
+        result.add(String.format("%.2f ms", leftMs));
+      }
+      return result.toString();
+    }
+    return String.format("%.2f ms", ms);
   }
 
   private String underline(final String text) {
@@ -421,6 +449,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
 
       @Override
       public void run() {
+        failed++;
+        testTime = TimeUnit.SECONDS.toNanos(timeoutSec);
         printEntry(State.INTERRUPTED, new TimeoutException());
         System.exit(0);
       }

@@ -340,7 +340,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   }
 
   private void clearLastLine() {
-    defaultStdout.print("\b".repeat(lastPrintedLineLength));
+    defaultStdout.printf("\r%s\r", " ".repeat(lastPrintedLineLength));
   }
 
   private String prepareHeader() {

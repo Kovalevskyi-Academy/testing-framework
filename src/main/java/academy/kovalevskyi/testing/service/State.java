@@ -10,7 +10,7 @@ public enum State {
   SUCCESSFUL("OK", Color.GREEN),
   FAILED("BAD", Color.RED),
   ABORTED("NONE", Color.YELLOW),
-  DISABLED("OFF", Color.MAGENTA),
+  DISABLED("OFF", Color.CYAN),
   RUNNING("RUN", Color.BLUE),
   INTERRUPTED("FATAL", Color.RED),
   NO_METHOD("ERROR", Color.RED),

@@ -4,6 +4,8 @@ This framework makes beautiful console output for JUnit tests
 ### academy.kovalevskyi.testing.service.AbstractStdCaptor
 > This class can be used for all tests that are going to intercept what will be displayed in the
 > method under test
+### academy.kovalevskyi.testing.service.FrameworkProperty
+> Provides all extra system properties of Testing Framework
 ### academy.kovalevskyi.testing.annotation.Container
 > Serves for marking test classes. All test classes should be annotated with this annotation
 > to work with Testing Framework

@@ -68,9 +68,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     final var buffer = new ByteArrayOutputStream();
     gagPrintStream = new PrintStream(buffer);
     consoleHandler = new StdConsoleHandler(buffer, defaultStdout);
-    if (debugMode) {
-      errorMode = false;
-    }
   }
 
   /**
@@ -116,6 +113,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     System.setOut(gagPrintStream);
     System.setErr(gagPrintStream);
     if (debugMode) {
+      errorMode = false;
       consoleHandler.start();
     }
     containerName = context.getDisplayName();
@@ -164,7 +162,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     timer = new Timer(true);
     timer.schedule(createTimer(), timeoutSec * 1_000);
     printEntry(State.RUNNING);
-    consoleHandler.newEntry();
+    if (debugMode) {
+      consoleHandler.newEntry();
+    }
     beginning = System.nanoTime();
   }
 

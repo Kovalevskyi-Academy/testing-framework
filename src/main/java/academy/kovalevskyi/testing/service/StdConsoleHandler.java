@@ -5,6 +5,9 @@ import java.io.PrintStream;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.Ansi.Color;
 
+/**
+ * Allows to catch users console prints and print it while test is running.
+ */
 public class StdConsoleHandler extends Thread {
 
   private final ByteArrayOutputStream buffer;

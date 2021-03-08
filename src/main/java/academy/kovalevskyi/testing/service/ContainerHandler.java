@@ -56,12 +56,12 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private String repeatedTestSummary;
   private boolean repeatedTest;
   private boolean noClassDef;
-  private boolean errorMode;
   private final StdConsoleHandler consoleHandler;
   private final PrintStream defaultStdout;
   private final PrintStream defaultStderr;
   private final PrintStream gagPrintStream;
   private final long timeoutSec;
+  private final boolean errorMode;
   private final boolean debugMode;
 
   public ContainerHandler() {
@@ -113,7 +113,6 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     System.setOut(gagPrintStream);
     System.setErr(gagPrintStream);
     if (debugMode) {
-      errorMode = false;
       consoleHandler.start();
     }
     containerName = context.getDisplayName();

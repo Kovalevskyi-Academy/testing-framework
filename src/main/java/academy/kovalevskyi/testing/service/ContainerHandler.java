@@ -32,9 +32,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     System.setProperty("com.google.common.truth.disable_stack_trace_cleaning", "true");
     errorMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.ERROR_MODE));
     debugMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.DEBUG_MODE));
+    verboseMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.VERBOSE_MODE));
     defaultStdout = System.out;
     defaultStderr = System.err;
     timeoutSec = 15;
+    messageMaxLength = 300;
   }
 
   private int successful = 0;
@@ -60,9 +62,11 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private final PrintStream defaultStdout;
   private final PrintStream defaultStderr;
   private final PrintStream gagPrintStream;
+  private final int messageMaxLength;
   private final long timeoutSec;
   private final boolean errorMode;
   private final boolean debugMode;
+  private final boolean verboseMode;
 
   public ContainerHandler() {
     final var buffer = new ByteArrayOutputStream();
@@ -373,6 +377,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     if (debugMode) {
       result.add("DEBUG MODE ON");
     }
+    if (verboseMode) {
+      result.add("VERBOSE MODE ON");
+    }
     return result.add(String.format("TIME %s", prepareDuration(totalTime))).toString();
   }
 
@@ -447,7 +454,13 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     } else if (cause instanceof AssertionError || cause instanceof TestAbortedException) {
       var message = cause.getMessage();
       if (message != null && !message.isBlank()) {
-        result.a(message.trim());
+        message = message.trim();
+        if (!verboseMode && message.length() > messageMaxLength) {
+          var info = "The message is too long, see instruction on how to enable verbose output";
+          result.format("%s...%n%s", message.substring(0, messageMaxLength), info);
+        } else {
+          result.a(message);
+        }
       } else {
         result.a("Error message is not provided");
       }

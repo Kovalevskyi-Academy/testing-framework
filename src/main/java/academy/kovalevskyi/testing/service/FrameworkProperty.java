@@ -5,6 +5,7 @@ package academy.kovalevskyi.testing.service;
  */
 public interface FrameworkProperty {
 
-  String ERROR_MODE = "academy.kovalevskyi.testing.errorMode";
-  String DEBUG_MODE = "academy.kovalevskyi.testing.debug";
+  String ERROR_MODE = "academy.kovalevskyi.testing.mode.error";
+  String DEBUG_MODE = "academy.kovalevskyi.testing.mode.debug";
+  String VERBOSE_MODE = "academy.kovalevskyi.testing.mode.verbose";
 }

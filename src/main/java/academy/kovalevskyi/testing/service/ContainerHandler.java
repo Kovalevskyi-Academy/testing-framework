@@ -36,7 +36,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     defaultStdout = System.out;
     defaultStderr = System.err;
     timeoutSec = 15;
-    messageMaxLength = 300;
+    messageMaxLength = 750;
   }
 
   private int successful = 0;

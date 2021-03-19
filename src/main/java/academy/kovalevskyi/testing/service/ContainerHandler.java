@@ -225,7 +225,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   public void testDisabled(ExtensionContext context, Optional<String> reason) {
     disabled++;
     testName = prepareTestName(context);
-    printEntry(State.DISABLED);
+    printEntry(State.DISABLED, new Exception(reason.orElse(null)));
   }
 
   /**
@@ -334,11 +334,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   }
 
   private void printSummary() {
-    if (!noClassDef) {
-      if (repeatedTest && successfulRepeatedTestInvocations > 0 && !errorMode) {
-        clearLastLine();
-        defaultStdout.println(repeatedTestSummary);
-      }
+    if (!noClassDef && repeatedTest && successfulRepeatedTestInvocations > 0 && !errorMode) {
+      clearLastLine();
+      defaultStdout.println(repeatedTestSummary);
     }
   }
 
@@ -440,6 +438,31 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     return String.format("%s%n%s", text, "-".repeat(text.trim().length()));
   }
 
+  private String prepareDisabledMessage(final Throwable cause) {
+    var message = cause.getMessage();
+    if (message != null && message.matches("^.+\\) is @Disabled$")) {
+      return "The disabled reason is not provided";
+    }
+    return prepareCauseMessage(cause);
+  }
+
+  private String prepareCauseMessage(final Throwable cause) {
+    var message = cause.getMessage();
+    if (message != null && !message.isBlank()) {
+      message = message.trim();
+      if (!verboseMode && message.length() > messageMaxLength) {
+        return String.format(
+            "%s...%n%s",
+            message.substring(0, messageMaxLength),
+            "The message is too long, see instruction on how to enable verbose output");
+      } else {
+        return message;
+      }
+    } else {
+      return "The error message is not provided";
+    }
+  }
+
   private String prepareReason(final State state, final Throwable cause) {
     final var result = Ansi.ansi().fg(state.color);
     if (state == State.NO_CLASS) {
@@ -448,29 +471,19 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       result.format("%s%n", cause.getMessage().trim());
       result.format("Reasons:%n");
       result.format("- method is absent%n");
-      result.format("- signature of method is different");
+      result.a("- signature of method is different");
     } else if (state == State.INTERRUPTED) {
       result.format("Time is out! Something went wrong...%n");
+    } else if (state == State.DISABLED) {
+      result.a(prepareDisabledMessage(cause));
     } else if (cause instanceof AssertionError || cause instanceof TestAbortedException) {
-      var message = cause.getMessage();
-      if (message != null && !message.isBlank()) {
-        message = message.trim();
-        if (!verboseMode && message.length() > messageMaxLength) {
-          var info = "The message is too long, see instruction on how to enable verbose output";
-          result.format("%s...%n%s", message.substring(0, messageMaxLength), info);
-        } else {
-          result.a(message);
-        }
-      } else {
-        result.a("Error message is not provided");
-      }
+      result.a(prepareCauseMessage(cause));
     } else {
-      result.format("Thrown unexpected %s", cause.getClass().getName());
-      var message = cause.getMessage();
-      if (message != null) {
-        result.format(": %s", message.trim());
-      }
-      result.format("%nat %s", cause.getStackTrace()[0].toString());
+      result.format(
+          "Thrown unexpected %s: %s%n",
+          cause.getClass().getName(),
+          prepareCauseMessage(cause));
+      result.format("at %s", cause.getStackTrace()[0].toString());
     }
     return result.reset().toString();
   }

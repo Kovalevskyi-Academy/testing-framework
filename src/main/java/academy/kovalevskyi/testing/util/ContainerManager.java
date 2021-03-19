@@ -6,55 +6,47 @@ import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
 import academy.kovalevskyi.testing.service.BaseComparator;
 import academy.kovalevskyi.testing.service.Request;
-import java.lang.reflect.InvocationTargetException;
 import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.reflections.Reflections;
 
 /**
- * Provides all available test containers from package {@value COURSE_PACKAGE}.
+ * Provides all available test containers.
  */
 public final class ContainerManager {
 
-  private static final Set<Class<?>> CONTAINERS;
-  private static final String COURSE_PACKAGE = "academy.kovalevskyi";
-
-  static {
-    CONTAINERS = new TreeSet<>(new BaseComparator());
-    CONTAINERS.addAll(new Reflections(COURSE_PACKAGE).getTypesAnnotatedWith(Container.class));
-  }
-
   /**
-   * Provides all available containers.
+   * Provides all available containers from project or some packages.
    *
+   * @param packages package prefixes
    * @return list of test classes
    * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<?>> getContainers() {
-    if (CONTAINERS.isEmpty()) {
-      throw new ContainerNotFoundException("No available containers");
-    }
-
-    return CONTAINERS.stream().collect(Collectors.toUnmodifiableList());
+  public static List<Class<?>> getContainers(final String... packages) {
+    return findContainers(packages).collect(Collectors.toUnmodifiableList());
   }
 
   /**
-   * Provides containers by request.
+   * Provides containers by request from project or some packages.
    *
-   * @param request combined request of containers
+   * @param request  combined request of containers
+   * @param packages package prefixes
    * @return list of test classes
    * @throws ContainerNotFoundException if containers are absent
    */
-  public static List<Class<?>> getContainers(final Request request) {
-    final var result = CONTAINERS
-        .stream()
+  public static List<Class<?>> getContainers(final Request request, final String... packages) {
+    final var result = findContainers(packages)
         .filter(request.getPredicate())
         .collect(Collectors.toUnmodifiableList());
 
     if (result.isEmpty()) {
-      throw new ContainerNotFoundException("Containers are not found by your request");
+      final var textRepresentation = request.toString();
+      final var memoryLinkOfObject = Integer.toHexString(System.identityHashCode(request));
+      throw new ContainerNotFoundException(
+          String.format(
+              "Containers are not found by your request %s",
+              textRepresentation.endsWith(memoryLinkOfObject) ? "\b" : textRepresentation));
     }
 
     return result;
@@ -73,8 +65,8 @@ public final class ContainerManager {
   }
 
   /**
-   * Extracts an instance of {@link CourseProvider} implementation from class witch is annotated
-   * with {@link Container} annotation.
+   * Extracts an instance of {@link CourseProvider} implementation from {@link Container}
+   * annotation.
    *
    * @param annotation {@link Container} instance
    * @return instance of {@link CourseProvider}
@@ -83,10 +75,7 @@ public final class ContainerManager {
   public static CourseProvider initProvider(final Container annotation) {
     try {
       return annotation.course().getConstructor().newInstance();
-    } catch (NoSuchMethodException
-        | InstantiationException
-        | IllegalAccessException
-        | InvocationTargetException e) {
+    } catch (Exception e) {
       throw new ExceptionInInitializerError(e);
     }
   }
@@ -106,5 +95,16 @@ public final class ContainerManager {
     }
 
     return clazz.getAnnotation(Container.class);
+  }
+
+  private static Stream<Class<?>> findContainers(final String... packages) {
+    final var reflections = new Reflections(packages.length == 0 ? "" : packages);
+    final var containers = reflections.getTypesAnnotatedWith(Container.class);
+
+    if (containers.isEmpty()) {
+      throw new ContainerNotFoundException("No available containers");
+    }
+
+    return containers.stream().sorted(new BaseComparator());
   }
 }

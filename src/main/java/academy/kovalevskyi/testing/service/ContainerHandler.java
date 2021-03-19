@@ -58,7 +58,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private String repeatedTestSummary;
   private boolean repeatedTest;
   private boolean noClassDef;
-  private final StdConsoleHandler consoleHandler;
+  private final ConsoleCaptor consoleCaptor;
   private final PrintStream defaultStdout;
   private final PrintStream defaultStderr;
   private final PrintStream gagPrintStream;
@@ -71,7 +71,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   public ContainerHandler() {
     final var buffer = new ByteArrayOutputStream();
     gagPrintStream = new PrintStream(buffer);
-    consoleHandler = new StdConsoleHandler(buffer, defaultStdout);
+    consoleCaptor = new ConsoleCaptor(buffer, defaultStdout);
   }
 
   /**
@@ -117,7 +117,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     System.setOut(gagPrintStream);
     System.setErr(gagPrintStream);
     if (debugMode) {
-      consoleHandler.start();
+      consoleCaptor.start();
     }
     containerName = context.getDisplayName();
     if (!errorMode) {
@@ -166,7 +166,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     timer.schedule(createTimer(), timeoutSec * 1_000);
     printEntry(State.RUNNING);
     if (debugMode) {
-      consoleHandler.newEntry();
+      consoleCaptor.newEntry();
     }
     beginning = System.nanoTime();
   }
@@ -272,8 +272,8 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     System.setOut(defaultStdout);
     System.setErr(defaultStderr);
     if (debugMode) {
-      consoleHandler.terminate();
-      consoleHandler.join();
+      consoleCaptor.terminate();
+      consoleCaptor.join();
     }
     gagPrintStream.close();
   }
@@ -306,7 +306,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
           && (
           state != State.SUCCESSFUL
               || (!errorMode && !repeatedTest)
-              || (debugMode && repeatedTest && !consoleHandler.isNewEntry()))
+              || (debugMode && repeatedTest && !consoleCaptor.isNewEntry()))
           && !(state == State.NO_METHOD && repeatedTest)) {
         result.append(System.lineSeparator());
       }

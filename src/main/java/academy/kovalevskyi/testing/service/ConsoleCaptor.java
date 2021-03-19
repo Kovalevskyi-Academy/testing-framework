@@ -8,14 +8,14 @@ import org.fusesource.jansi.Ansi.Color;
 /**
  * Allows to catch users console prints and print it while test is running.
  */
-public class StdConsoleHandler extends Thread {
+public class ConsoleCaptor extends Thread {
 
   private final ByteArrayOutputStream buffer;
   private final PrintStream defaultStdout;
   private boolean live;
   private volatile boolean newEntry;
 
-  public StdConsoleHandler(final ByteArrayOutputStream buffer, final PrintStream defaultStdout) {
+  public ConsoleCaptor(final ByteArrayOutputStream buffer, final PrintStream defaultStdout) {
     this.buffer = buffer;
     this.defaultStdout = defaultStdout;
     this.setDaemon(true);

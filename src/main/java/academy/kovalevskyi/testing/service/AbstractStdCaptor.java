@@ -11,29 +11,53 @@ import org.junit.jupiter.api.BeforeEach;
  */
 public abstract class AbstractStdCaptor {
 
-  protected final ByteArrayOutputStream outputStreamCaptor;
-  protected final ByteArrayOutputStream errorStreamCaptor;
+  private ByteArrayOutputStream outputStreamCaptor;
+  private ByteArrayOutputStream errorStreamCaptor;
   private final PrintStream defaultStdout;
   private final PrintStream defaultStderr;
 
   {
-    outputStreamCaptor = new ByteArrayOutputStream();
-    errorStreamCaptor = new ByteArrayOutputStream();
     defaultStdout = System.out;
     defaultStderr = System.err;
   }
 
+  /**
+   * Activates captor.
+   */
   @BeforeEach
-  public void setUpCustomOutput() {
+  void setUpCustomOutput() {
+    outputStreamCaptor = new ByteArrayOutputStream();
+    errorStreamCaptor = new ByteArrayOutputStream();
     System.setOut(new PrintStream(outputStreamCaptor));
     System.setErr(new PrintStream(errorStreamCaptor));
   }
 
+  /**
+   * Deactivates captor.
+   */
   @AfterEach
-  public void setUpDefaultOutput() {
+  void setUpDefaultOutput() {
     System.out.close();
     System.err.close();
     System.setOut(defaultStdout);
     System.setErr(defaultStderr);
+  }
+
+  /**
+   * Provides all captured text printed into standard output stream.
+   *
+   * @return text from standard output stream
+   */
+  public final String getStdOutText() {
+    return outputStreamCaptor.toString();
+  }
+
+  /**
+   * Provides all captured text printed into standard error stream.
+   *
+   * @return text from standard error stream
+   */
+  public final String getStdErrText() {
+    return errorStreamCaptor.toString();
   }
 }

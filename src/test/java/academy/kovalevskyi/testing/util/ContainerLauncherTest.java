@@ -8,7 +8,7 @@ import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
 import academy.kovalevskyi.testing.service.FrameworkProperty;
 import academy.kovalevskyi.testing.test.one.TestClassOne;
-import academy.kovalevskyi.testing.test.three.TestClassFourDuplicate;
+import academy.kovalevskyi.testing.test.three.TestClassFour;
 import java.util.ArrayList;
 import java.util.Collections;
 import org.junit.jupiter.api.Test;
@@ -62,18 +62,18 @@ public class ContainerLauncherTest {
 
   @Test
   public void testExecuteContainerLaunchedTest() {
-    ContainerLauncher.execute(TestClassFourDuplicate.class, true, true, true);
-    assertTrue(TestClassFourDuplicate.TEST_FILE.exists());
-    TestClassFourDuplicate.TEST_FILE.deleteOnExit();
+    ContainerLauncher.execute(TestClassFour.class, true, true, true);
+    assertTrue(TestClassFour.TEST_FILE.exists());
+    TestClassFour.TEST_FILE.deleteOnExit();
   }
 
   @Test
   public void testExecuteContainersLaunchedTest() {
     var list = new ArrayList<Class<?>>();
-    list.add(TestClassFourDuplicate.class);
+    list.add(TestClassFour.class);
     ContainerLauncher.execute(list, true, true, true);
-    assertTrue(TestClassFourDuplicate.TEST_FILE.exists());
-    TestClassFourDuplicate.TEST_FILE.deleteOnExit();
+    assertTrue(TestClassFour.TEST_FILE.exists());
+    TestClassFour.TEST_FILE.deleteOnExit();
   }
 
   private void disableAllProperties() {

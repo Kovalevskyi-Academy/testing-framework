@@ -9,7 +9,6 @@ import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
 import academy.kovalevskyi.testing.test.one.TestClassOne;
 import academy.kovalevskyi.testing.test.one.TestClassTwo;
 import academy.kovalevskyi.testing.test.three.TestClassFour;
-import academy.kovalevskyi.testing.test.three.TestClassFourDuplicate;
 import academy.kovalevskyi.testing.test.two.TestClassThree;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +41,7 @@ public class BaseComparatorTest {
 
   @Test
   public void testEquals() {
-    assertEquals(0, comparator.compare(TestClassFour.class, TestClassFourDuplicate.class));
+    assertEquals(0, comparator.compare(TestClassFour.class, TestClassFour.class));
   }
 
   @Test

@@ -102,6 +102,9 @@ public class ContainerRequest implements Request {
       if (key == null || key.isBlank()) {
         throw new RequestException("Course key should be provided");
       }
+      if (key.contains(" ")) {
+        throw new RequestException("Key should not contain whitespaces");
+      }
       if (id >= 0 && (day < 0 || week < 0)) {
         throw new RequestException("Week and day should be provided to get some container");
       }

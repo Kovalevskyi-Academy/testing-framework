@@ -17,6 +17,10 @@ public class BaseComparator implements Comparator<Class<?>> {
     final var course1 = ContainerManager.initProvider(container1);
     final var course2 = ContainerManager.initProvider(container2);
 
+    if (container1.equals(container2)) {
+      return 0;
+    }
+
     if (!course1.key().equals(course2.key())) {
       return course1.key().compareTo(course2.key());
     }

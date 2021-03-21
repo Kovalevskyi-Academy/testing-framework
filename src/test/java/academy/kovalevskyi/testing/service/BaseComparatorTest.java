@@ -58,8 +58,7 @@ public class BaseComparatorTest {
   @Test
   public void testException() {
     try {
-      comparator.compare(TestClassOne.class, BaseComparatorTest.class);
-      comparator.compare(BaseComparatorTest.class, TestClassOne.class);
+      comparator.compare(BaseComparatorTest.class, BaseComparatorTest.class);
       fail();
     } catch (NotAnnotatedContainerException ignored) {
     }

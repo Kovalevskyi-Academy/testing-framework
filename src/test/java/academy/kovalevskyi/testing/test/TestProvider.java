@@ -4,8 +4,8 @@ import academy.kovalevskyi.testing.annotation.CourseProvider;
 
 public class TestProvider implements CourseProvider {
 
-  public static String NAME = "some name";
-  public static String KEY = "C3PO";
+  public static final String NAME = "some name";
+  public static final String KEY = "C3PO";
 
   @Override
   public String name() {

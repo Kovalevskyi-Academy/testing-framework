@@ -26,6 +26,10 @@ public class ContainerRequest implements Request {
     this.predicate = predicate;
   }
 
+  public static Builder builder() {
+    return new Builder();
+  }
+
   @Override
   public Predicate<Class<?>> getPredicate() {
     return predicate;
@@ -49,17 +53,13 @@ public class ContainerRequest implements Request {
     return message.toString();
   }
 
-  public static Builder builder() {
-    return new Builder();
-  }
-
   public static class Builder {
 
+    private final List<Predicate<Class<?>>> predicates;
     private String key;
     private int week;
     private int day;
     private int id;
-    private final List<Predicate<Class<?>>> predicates;
 
     private Builder() {
       week = Integer.MIN_VALUE;

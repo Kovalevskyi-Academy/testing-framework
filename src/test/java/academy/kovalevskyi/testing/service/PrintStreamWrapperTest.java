@@ -1,5 +1,6 @@
 package academy.kovalevskyi.testing.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,36 +15,29 @@ import java.io.PrintStream;
 import java.util.Locale;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class PrintStreamWrapperTest {
 
-  private static final String template = ":\n";
-  private static ByteArrayOutputStream buffer;
-  private static PrintStream stream;
+  private static final String TEMPLATE = ":\n";
+  private static final ByteArrayOutputStream BUFFER = new ByteArrayOutputStream();
+  private static final PrintStream STREAM = new PrintStream(BUFFER);
   private PrintStreamWrapper wrapper;
-
-  @BeforeAll
-  public static void beforeAll() {
-    buffer = new ByteArrayOutputStream();
-    stream = new PrintStream(buffer);
-  }
 
   @AfterAll
   public static void afterAll() {
-    stream.close();
+    STREAM.close();
   }
 
   @BeforeEach
   public void setUp() {
-    wrapper = new PrintStreamWrapper(stream);
+    wrapper = new PrintStreamWrapper(STREAM);
   }
 
   @AfterEach
   public void tearDown() {
-    buffer.reset();
+    BUFFER.reset();
     wrapper.destroy();
   }
 
@@ -65,20 +59,26 @@ public class PrintStreamWrapperTest {
   public void testCheckError() {
     var mock = mock(PrintStream.class);
     var streamWrapper = new PrintStreamWrapper(mock);
+
     streamWrapper.checkError();
     verify(mock).checkError();
+    reset(mock);
+
     streamWrapper.destroy();
+    assertFalse(streamWrapper.checkError());
+    verify(mock, never()).checkError();
   }
 
   @Test
   public void testClose() {
     var mock = mock(PrintStream.class);
     var streamWrapper = new PrintStreamWrapper(mock);
+
     assertThrows(UnsupportedOperationException.class, streamWrapper::close);
     verify(mock, never()).close();
-    assertFalse(streamWrapper.hasContent());
+
     streamWrapper.destroy();
-    assertThrows(NullPointerException.class, streamWrapper::close);
+    assertDoesNotThrow(streamWrapper::close);
   }
 
   @Test
@@ -103,34 +103,38 @@ public class PrintStreamWrapperTest {
     assertFalse(streamWrapper.hasContent());
 
     streamWrapper.destroy();
-    assertThrows(NullPointerException.class, streamWrapper::flush);
+    reset(mock);
+    assertDoesNotThrow(streamWrapper::flush);
+    verify(mock, never()).flush();
   }
 
   @Test
   public void testWriteByte() {
     var arg = 10;
-    var expected = String.format("%s\n", template);
+    var expected = String.format("%s\n", TEMPLATE);
 
     wrapper.write(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.write(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.write(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.write(arg));
+    assertDoesNotThrow(() -> wrapper.write(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -139,48 +143,52 @@ public class PrintStreamWrapperTest {
 
     wrapper.write(bytes, 0, bytes.length);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.write(bytes, 0, bytes.length);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%s", template, new String(bytes)), buffer.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, new String(bytes)), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%s\n", template, new String(bytes)), buffer.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, new String(bytes)), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.write(bytes, 0, bytes.length);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.write(bytes, 0, bytes.length));
+    assertDoesNotThrow(() -> wrapper.write(bytes, 0, bytes.length));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintBoolean() {
     wrapper.print(true);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(true);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%b", template, true), buffer.toString());
+    assertEquals(String.format("%s%b", TEMPLATE, true), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%b\n", template, true), buffer.toString());
+    assertEquals(String.format("%s%b\n", TEMPLATE, true), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(true);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(true));
+    assertDoesNotThrow(() -> wrapper.print(true));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -189,72 +197,78 @@ public class PrintStreamWrapperTest {
 
     wrapper.print(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%c", template, arg), buffer.toString());
+    assertEquals(String.format("%s%c", TEMPLATE, arg), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%c\n", template, arg), buffer.toString());
+    assertEquals(String.format("%s%c\n", TEMPLATE, arg), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(arg));
+    assertDoesNotThrow(() -> wrapper.print(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintInt() {
     wrapper.print(Integer.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(Integer.MAX_VALUE);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%d", template, Integer.MAX_VALUE), buffer.toString());
+    assertEquals(String.format("%s%d", TEMPLATE, Integer.MAX_VALUE), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%d\n", template, Integer.MAX_VALUE), buffer.toString());
+    assertEquals(String.format("%s%d\n", TEMPLATE, Integer.MAX_VALUE), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(Integer.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(Integer.MAX_VALUE));
+    assertDoesNotThrow(() -> wrapper.print(Integer.MAX_VALUE));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintLong() {
     wrapper.print(Long.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(Long.MAX_VALUE);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%d", template, Long.MAX_VALUE), buffer.toString());
+    assertEquals(String.format("%s%d", TEMPLATE, Long.MAX_VALUE), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%d\n", template, Long.MAX_VALUE), buffer.toString());
+    assertEquals(String.format("%s%d\n", TEMPLATE, Long.MAX_VALUE), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(Long.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(Long.MAX_VALUE));
+    assertDoesNotThrow(() -> wrapper.print(Long.MAX_VALUE));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -263,24 +277,26 @@ public class PrintStreamWrapperTest {
 
     wrapper.print(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f", template, arg), buffer.toString());
+    assertEquals(String.format("%s%.1f", TEMPLATE, arg), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f\n", template, arg), buffer.toString());
+    assertEquals(String.format("%s%.1f\n", TEMPLATE, arg), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(arg));
+    assertDoesNotThrow(() -> wrapper.print(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -289,24 +305,26 @@ public class PrintStreamWrapperTest {
 
     wrapper.print(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f", template, arg), buffer.toString());
+    assertEquals(String.format("%s%.1f", TEMPLATE, arg), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f\n", template, arg), buffer.toString());
+    assertEquals(String.format("%s%.1f\n", TEMPLATE, arg), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(arg));
+    assertDoesNotThrow(() -> wrapper.print(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -315,24 +333,26 @@ public class PrintStreamWrapperTest {
 
     wrapper.print(chars);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(chars);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%s", template, new String(chars)), buffer.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, new String(chars)), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%s\n", template, new String(chars)), buffer.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, new String(chars)), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(chars);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(chars));
+    assertDoesNotThrow(() -> wrapper.print(chars));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -341,24 +361,26 @@ public class PrintStreamWrapperTest {
 
     wrapper.print(text);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(text);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%s", template, text), buffer.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, text), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%s\n", template, text), buffer.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, text), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(text);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(text));
+    assertDoesNotThrow(() -> wrapper.print(text));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -367,402 +389,432 @@ public class PrintStreamWrapperTest {
 
     wrapper.print(obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.print(obj);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%s", template, obj), buffer.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, obj), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%s\n", template, obj), buffer.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, obj), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.print(obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.print(obj));
+    assertDoesNotThrow(() -> wrapper.print(obj));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintln() {
-    var expected = String.format("%s%n", template);
+    var expected = String.format("%s%n", TEMPLATE);
 
     wrapper.println();
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println();
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println();
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println());
+    assertDoesNotThrow(() -> wrapper.println());
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnBoolean() {
-    var expected = String.format("%s%b%n", template, true);
+    var expected = String.format("%s%b%n", TEMPLATE, true);
 
     wrapper.println(true);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(true);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(true);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(true));
+    assertDoesNotThrow(() -> wrapper.println(true));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnChar() {
     var arg = '!';
-    var expected = String.format("%s%c%n", template, arg);
+    var expected = String.format("%s%c%n", TEMPLATE, arg);
 
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(arg));
+    assertDoesNotThrow(() -> wrapper.println(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnInt() {
-    var expected = String.format("%s%d%n", template, Integer.MAX_VALUE);
+    var expected = String.format("%s%d%n", TEMPLATE, Integer.MAX_VALUE);
 
     wrapper.println(Integer.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(Integer.MAX_VALUE);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(Integer.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(Integer.MAX_VALUE));
+    assertDoesNotThrow(() -> wrapper.println(Integer.MAX_VALUE));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnLong() {
-    var expected = String.format("%s%d%n", template, Long.MAX_VALUE);
+    var expected = String.format("%s%d%n", TEMPLATE, Long.MAX_VALUE);
 
     wrapper.println(Long.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(Long.MAX_VALUE);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(Long.MAX_VALUE);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(Long.MAX_VALUE));
+    assertDoesNotThrow(() -> wrapper.println(Long.MAX_VALUE));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnFloat() {
     var arg = 1F;
-    var expected = String.format("%s%.1f%n", template, arg);
+    var expected = String.format("%s%.1f%n", TEMPLATE, arg);
 
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(arg));
+    assertDoesNotThrow(() -> wrapper.println(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnDouble() {
     var arg = 1D;
-    var expected = String.format("%s%.1f%n", template, arg);
+    var expected = String.format("%s%.1f%n", TEMPLATE, arg);
 
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(arg));
+    assertDoesNotThrow(() -> wrapper.println(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnChars() {
     var chars = new char[]{'h', 'e', 'l', 'l', 'o'};
-    var expected = String.format("%s%s%n", template, new String(chars));
+    var expected = String.format("%s%s%n", TEMPLATE, new String(chars));
 
     wrapper.println(chars);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(chars);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(chars);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(chars));
+    assertDoesNotThrow(() -> wrapper.println(chars));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnString() {
     var text = "hello";
-    var expected = String.format("%s%s%n", template, text);
+    var expected = String.format("%s%s%n", TEMPLATE, text);
 
     wrapper.println(text);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(text);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(text);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(text));
+    assertDoesNotThrow(() -> wrapper.println(text));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintlnObject() {
     var obj = new Object();
-    var expected = String.format("%s%s%n", template, obj);
+    var expected = String.format("%s%s%n", TEMPLATE, obj);
 
     wrapper.println(obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.println(obj);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     wrapper.println(obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.println(obj));
+    assertDoesNotThrow(() -> wrapper.println(obj));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintf() {
     var obj = new Object();
-    var expected = String.format("%s%s%n", template, obj);
+    var expected = String.format("%s%s%n", TEMPLATE, obj);
     var format = "%s%n";
 
     wrapper.printf(format, obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.printf(format, obj);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     assertEquals(wrapper, wrapper.printf(format, obj));
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.printf(format, obj));
+    assertDoesNotThrow(() -> wrapper.printf(format, obj));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testPrintfWithLocal() {
     var obj = new Object();
-    var expected = String.format(Locale.US, "%s%s%n", template, obj);
+    var expected = String.format(Locale.US, "%s%s%n", TEMPLATE, obj);
     var format = "%s%n";
 
     wrapper.printf(Locale.US, format, obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.printf(Locale.US, format, obj);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     assertEquals(wrapper, wrapper.printf(Locale.US, format, obj));
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.printf(Locale.US, format, obj));
+    assertDoesNotThrow(() -> wrapper.printf(Locale.US, format, obj));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testFormat() {
     var obj = new Object();
-    var expected = String.format("%s%s%n", template, obj);
+    var expected = String.format("%s%s%n", TEMPLATE, obj);
     var format = "%s%n";
 
     wrapper.format(format, obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.format(format, obj);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     assertEquals(wrapper, wrapper.format(format, obj));
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.format(format, obj));
+    assertDoesNotThrow(() -> wrapper.format(format, obj));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
   public void testFormatWithLocal() {
     var obj = new Object();
-    var expected = String.format(Locale.US, "%s%s%n", template, obj);
+    var expected = String.format(Locale.US, "%s%s%n", TEMPLATE, obj);
     var format = "%s%n";
 
     wrapper.format(Locale.US, format, obj);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.format(Locale.US, format, obj);
     assertTrue(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(expected, buffer.toString());
+    assertEquals(expected, BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     assertEquals(wrapper, wrapper.format(Locale.US, format, obj));
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.format(Locale.US, format, obj));
+    assertDoesNotThrow(() -> wrapper.format(Locale.US, format, obj));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -771,24 +823,26 @@ public class PrintStreamWrapperTest {
 
     wrapper.append(text);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.append(text);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%s", template, text), buffer.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, text), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%s\n", template, text), buffer.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, text), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     assertEquals(wrapper, wrapper.append(text));
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.append(text));
+    assertDoesNotThrow(() -> wrapper.append(text));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -798,24 +852,26 @@ public class PrintStreamWrapperTest {
 
     wrapper.append(text, 0, end);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.append(text, 0, end);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%s", template, text.substring(0, end)), buffer.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, text.substring(0, end)), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%s\n", template, text.substring(0, end)), buffer.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, text.substring(0, end)), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     assertEquals(wrapper, wrapper.append(text, 0, end));
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.append(text, 0, end));
+    assertDoesNotThrow(() -> wrapper.append(text, 0, end));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 
   @Test
@@ -824,23 +880,25 @@ public class PrintStreamWrapperTest {
 
     wrapper.append(arg);
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.enable();
     wrapper.append(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%c", template, arg), buffer.toString());
+    assertEquals(String.format("%s%c", TEMPLATE, arg), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%c\n", template, arg), buffer.toString());
+    assertEquals(String.format("%s%c\n", TEMPLATE, arg), BUFFER.toString());
 
-    buffer.reset();
+    BUFFER.reset();
     assertEquals(wrapper, wrapper.append(arg));
     assertFalse(wrapper.hasContent());
-    assertEquals(0, buffer.size());
+    assertEquals(0, BUFFER.size());
 
     wrapper.destroy();
-    assertThrows(NullPointerException.class, () -> wrapper.append(arg));
+    assertDoesNotThrow(() -> wrapper.append(arg));
+    assertFalse(wrapper.hasContent());
+    assertEquals(0, BUFFER.size());
   }
 }

@@ -3,6 +3,7 @@ package academy.kovalevskyi.testing.service;
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Locale;
+import javax.annotation.Nonnull;
 
 public class PrintStreamWrapper extends PrintStream {
 
@@ -21,25 +22,35 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public boolean checkError() {
+    if (!alive) {
+      return false;
+    }
     return super.checkError() || stream.checkError();
   }
 
   @Override
   public void close() {
-    checkInstance(false);
+    if (!alive) {
+      return;
+    }
     throw new UnsupportedOperationException("You have not right to close this stream");
   }
 
   @Override
   public void flush() {
-    checkInstance(false);
+    if (!alive) {
+      return;
+    }
     super.flush();
     stream.flush();
   }
 
   @Override
   public void write(int b) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.write(b);
       stream.write(b);
@@ -47,8 +58,11 @@ public class PrintStreamWrapper extends PrintStream {
   }
 
   @Override
-  public void write(byte[] buf, int off, int len) {
-    checkInstance(true);
+  public void write(@Nonnull byte[] buf, int off, int len) {
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.write(buf, off, len);
       stream.write(buf, off, len);
@@ -57,7 +71,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(boolean b) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(b);
       stream.print(b);
@@ -66,7 +83,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(char c) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(c);
       stream.print(c);
@@ -75,7 +95,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(int i) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(i);
       stream.print(i);
@@ -84,7 +107,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(long l) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(l);
       stream.print(l);
@@ -93,7 +119,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(float f) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(f);
       stream.print(f);
@@ -102,7 +131,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(double d) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(d);
       stream.print(d);
@@ -110,8 +142,11 @@ public class PrintStreamWrapper extends PrintStream {
   }
 
   @Override
-  public void print(char[] s) {
-    checkInstance(true);
+  public void print(@Nonnull char[] s) {
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(s);
       stream.print(s);
@@ -120,7 +155,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(String s) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(s);
       stream.print(s);
@@ -129,7 +167,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void print(Object obj) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.print(obj);
       stream.print(obj);
@@ -138,7 +179,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println() {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println();
       stream.println();
@@ -147,7 +191,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(boolean x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -156,7 +203,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(char x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -165,7 +215,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(int x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -174,7 +227,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(long x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -183,7 +239,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(float x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -192,7 +251,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(double x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -200,8 +262,11 @@ public class PrintStreamWrapper extends PrintStream {
   }
 
   @Override
-  public void println(char[] x) {
-    checkInstance(true);
+  public void println(@Nonnull char[] x) {
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -210,7 +275,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(String x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -219,7 +287,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public void println(Object x) {
-    checkInstance(true);
+    if (!alive) {
+      return;
+    }
+    checkBuffer();
     if (state) {
       super.println(x);
       stream.println(x);
@@ -227,8 +298,11 @@ public class PrintStreamWrapper extends PrintStream {
   }
 
   @Override
-  public PrintStream printf(String format, Object... args) {
-    checkInstance(true);
+  public PrintStream printf(@Nonnull String format, Object... args) {
+    if (!alive) {
+      return this;
+    }
+    checkBuffer();
     if (state) {
       super.printf(format, args);
       stream.printf(format, args);
@@ -237,8 +311,11 @@ public class PrintStreamWrapper extends PrintStream {
   }
 
   @Override
-  public PrintStream printf(Locale l, String format, Object... args) {
-    checkInstance(true);
+  public PrintStream printf(Locale l, @Nonnull String format, Object... args) {
+    if (!alive) {
+      return this;
+    }
+    checkBuffer();
     if (state) {
       super.printf(l, format, args);
       stream.printf(l, format, args);
@@ -247,8 +324,11 @@ public class PrintStreamWrapper extends PrintStream {
   }
 
   @Override
-  public PrintStream format(String format, Object... args) {
-    checkInstance(true);
+  public PrintStream format(@Nonnull String format, Object... args) {
+    if (!alive) {
+      return this;
+    }
+    checkBuffer();
     if (state) {
       super.format(format, args);
       stream.format(format, args);
@@ -257,8 +337,11 @@ public class PrintStreamWrapper extends PrintStream {
   }
 
   @Override
-  public PrintStream format(Locale l, String format, Object... args) {
-    checkInstance(true);
+  public PrintStream format(Locale l, @Nonnull String format, Object... args) {
+    if (!alive) {
+      return this;
+    }
+    checkBuffer();
     if (state) {
       super.format(l, format, args);
       stream.format(l, format, args);
@@ -268,7 +351,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public PrintStream append(CharSequence csq) {
-    checkInstance(true);
+    if (!alive) {
+      return this;
+    }
+    checkBuffer();
     if (state) {
       super.append(csq);
       stream.append(csq);
@@ -278,7 +364,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public PrintStream append(CharSequence csq, int start, int end) {
-    checkInstance(true);
+    if (!alive) {
+      return this;
+    }
+    checkBuffer();
     if (state) {
       super.append(csq, start, end);
       stream.append(csq, start, end);
@@ -288,7 +377,10 @@ public class PrintStreamWrapper extends PrintStream {
 
   @Override
   public PrintStream append(char c) {
-    checkInstance(true);
+    if (!alive) {
+      return this;
+    }
+    checkBuffer();
     if (state) {
       super.append(c);
       stream.append(c);
@@ -334,12 +426,9 @@ public class PrintStreamWrapper extends PrintStream {
     }
   }
 
-  private void checkInstance(final boolean newLine) {
-    if (!alive) {
-      throw new NullPointerException("Stream has been destroyed");
-    }
+  private void checkBuffer() {
     synchronized (this) {
-      if (newLine && state && buffer.size() == 0) {
+      if (state && buffer.size() == 0) {
         content = true;
         var twoDotsByte = 58;
         defaultStream.write(twoDotsByte);

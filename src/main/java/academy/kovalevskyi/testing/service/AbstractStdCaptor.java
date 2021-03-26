@@ -2,8 +2,9 @@ package academy.kovalevskyi.testing.service;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 
 /**
  * This class can be used for all tests that are going to intercept what will be displayed in the
@@ -11,36 +12,38 @@ import org.junit.jupiter.api.BeforeEach;
  */
 public abstract class AbstractStdCaptor {
 
-  private ByteArrayOutputStream outputStreamCaptor;
-  private ByteArrayOutputStream errorStreamCaptor;
-  private final PrintStream defaultStdout;
-  private final PrintStream defaultStderr;
-
-  {
-    defaultStdout = System.out;
-    defaultStderr = System.err;
-  }
+  private static final PrintStream DEFAULT_STDOUT = System.out;
+  private static final PrintStream DEFAULT_STDERR = System.err;
+  private static final ByteArrayOutputStream OUT_STREAM_BUFFER = new ByteArrayOutputStream();
+  private static final ByteArrayOutputStream ERR_STREAM_BUFFER = new ByteArrayOutputStream();
 
   /**
    * Activates captor.
    */
-  @BeforeEach
-  void setUpCustomOutput() {
-    outputStreamCaptor = new ByteArrayOutputStream();
-    errorStreamCaptor = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(outputStreamCaptor));
-    System.setErr(new PrintStream(errorStreamCaptor));
+  @BeforeAll
+  static void setUpCustomOutput() {
+    System.setOut(new PrintStream(OUT_STREAM_BUFFER));
+    System.setErr(new PrintStream(ERR_STREAM_BUFFER));
   }
 
   /**
    * Deactivates captor.
    */
-  @AfterEach
-  void setUpDefaultOutput() {
+  @AfterAll
+  static void setUpDefaultOutput() {
     System.out.close();
     System.err.close();
-    System.setOut(defaultStdout);
-    System.setErr(defaultStderr);
+    System.setOut(DEFAULT_STDOUT);
+    System.setErr(DEFAULT_STDERR);
+  }
+
+  /**
+   * Resets all buffers.
+   */
+  @AfterEach
+  final void resetBuffersData() {
+    OUT_STREAM_BUFFER.reset();
+    ERR_STREAM_BUFFER.reset();
   }
 
   /**
@@ -48,8 +51,8 @@ public abstract class AbstractStdCaptor {
    *
    * @return text from standard output stream
    */
-  public final String getStdOutText() {
-    return outputStreamCaptor.toString();
+  protected final String getStdOutContent() {
+    return OUT_STREAM_BUFFER.toString();
   }
 
   /**
@@ -57,7 +60,7 @@ public abstract class AbstractStdCaptor {
    *
    * @return text from standard error stream
    */
-  public final String getStdErrText() {
-    return errorStreamCaptor.toString();
+  protected final String getStdErrContent() {
+    return ERR_STREAM_BUFFER.toString();
   }
 }

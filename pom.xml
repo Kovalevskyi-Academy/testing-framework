@@ -6,7 +6,7 @@
 
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
-  <version>19-SNAPSHOT</version>
+  <version>19</version>
 
   <properties>
     <java.version>11</java.version>
@@ -101,7 +101,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-checkstyle-plugin</artifactId>
-        <version>3.1.1</version>
+        <version>3.1.2</version>
         <dependencies>
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>

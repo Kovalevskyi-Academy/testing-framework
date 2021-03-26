@@ -1,6 +1,5 @@
 package academy.kovalevskyi.testing.service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.Objects;
 import java.util.Optional;
@@ -28,17 +27,13 @@ import org.opentest4j.TestAbortedException;
 public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAllCallback,
     BeforeEachCallback, AfterEachCallback, ExecutionCondition {
 
-  {
-    System.setProperty("com.google.common.truth.disable_stack_trace_cleaning", "true");
-    errorMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.ERROR_MODE));
-    debugMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.DEBUG_MODE));
-    verboseMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.VERBOSE_MODE));
-    defaultStdout = System.out;
-    defaultStderr = System.err;
-    timeoutSec = 15;
-    messageMaxLength = 750;
-  }
-
+  private final long timeoutSec = 15;
+  private final boolean errorMode;
+  private final boolean debugMode;
+  private final boolean verboseMode;
+  private final PrintStream stdOut = System.out;
+  private final PrintStream stdErr = System.err;
+  private final PrintStreamWrapper wrapper = new PrintStreamWrapper(System.out);
   private int successful = 0;
   private int failed = 0;
   private int aborted = 0;
@@ -51,27 +46,20 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private long totalTime = 0;
   private long testTime = 0;
   private long repeatedTestTime = 0;
-  private long beginning;
+  private long beginning = 0;
   private Timer timer;
-  private String containerName;
   private String testName;
   private String repeatedTestSummary;
-  private boolean repeatedTest;
-  private boolean noClassDef;
-  private final ConsoleCaptor consoleCaptor;
-  private final PrintStream defaultStdout;
-  private final PrintStream defaultStderr;
-  private final PrintStream gagPrintStream;
-  private final int messageMaxLength;
-  private final long timeoutSec;
-  private final boolean errorMode;
-  private final boolean debugMode;
-  private final boolean verboseMode;
+  private boolean repeatedTest = false;
+  private boolean noClassDef = false;
+  private boolean printedDuringMethod = false;
+  private boolean printedDuringErrorMode = false;
 
-  public ContainerHandler() {
-    final var buffer = new ByteArrayOutputStream();
-    gagPrintStream = new PrintStream(buffer);
-    consoleCaptor = new ConsoleCaptor(buffer, defaultStdout);
+  {
+    System.setProperty("com.google.common.truth.disable_stack_trace_cleaning", "true");
+    errorMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.ERROR_MODE));
+    debugMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.DEBUG_MODE));
+    verboseMode = Boolean.parseBoolean(System.getProperty(FrameworkProperty.VERBOSE_MODE));
   }
 
   /**
@@ -114,15 +102,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   @Override
   public void beforeAll(ExtensionContext context) {
     AnsiConsole.systemInstall();
-    System.setOut(gagPrintStream);
-    System.setErr(gagPrintStream);
-    if (debugMode) {
-      consoleCaptor.start();
-    }
-    containerName = context.getDisplayName();
-    if (!errorMode) {
-      defaultStdout.print(prepareHeader());
-    }
+    System.setOut(wrapper);
+    System.setErr(wrapper);
+    stdOut.printf("Result of %s:%n%n", context.getDisplayName());
+
   }
 
   /**
@@ -166,7 +149,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     timer.schedule(createTimer(), timeoutSec * 1_000);
     printEntry(State.RUNNING);
     if (debugMode) {
-      consoleCaptor.newEntry();
+      if (errorMode) {
+        printedDuringMethod = false;
+      }
+      wrapper.enable();
     }
     beginning = System.nanoTime();
   }
@@ -182,6 +168,13 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     totalTime += testTime;
     if (repeatedTest) {
       repeatedTestTime += testTime;
+    }
+    if (debugMode) {
+      printedDuringMethod = wrapper.hasContent();
+      if (errorMode && printedDuringMethod) {
+        printedDuringErrorMode = true;
+      }
+      wrapper.disable();
     }
     timer.cancel();
   }
@@ -256,44 +249,24 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
    * @param context the current extension context
    */
   @Override
-  public void afterAll(ExtensionContext context) throws InterruptedException {
+  public void afterAll(ExtensionContext context) {
     printSummary();
     clearLastLine();
     final var errors = failed + aborted + disabled;
-    if (!errorMode || errors > 0) {
-      defaultStdout.println(underline(prepareFooter()));
-    } else if (errors == 0) {
-      defaultStdout.printf(
-          "%s is done successfully in %s!%n",
-          containerName,
-          prepareDuration(totalTime));
+    if (errorMode && errors == 0 && !printedDuringErrorMode) {
+      stdOut.println("You have no errors! Good job!");
     }
+    stdOut.println(underline(prepareFooter()));
     AnsiConsole.systemUninstall();
-    System.setOut(defaultStdout);
-    System.setErr(defaultStderr);
-    if (debugMode) {
-      consoleCaptor.terminate();
-      consoleCaptor.join();
-    }
-    gagPrintStream.close();
+    wrapper.destroy();
+    System.setOut(stdOut);
+    System.setErr(stdErr);
   }
 
   private void printEntry(final State state) {
     if (!noClassDef) {
       final var result = new StringBuilder();
-      if (errorMode) {
-        var errors = failed + aborted + disabled;
-        if (errors == 1 && (state != State.SUCCESSFUL && state != State.RUNNING)) {
-          result.append(prepareHeader());
-        }
-        if (errors == 0) {
-          result.append(String.format("%s -> %s", containerName, testName));
-        } else {
-          result.append(String.format("%s", testName));
-        }
-      } else {
-        result.append(String.format("%s", testName));
-      }
+      result.append(String.format("%s", testName));
       if (repeatedTest) {
         repeatedTestSummary = prepareSummary(state);
         result.append(String.format(" test %d", repeatedTestInvocations));
@@ -305,8 +278,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       if (state != State.RUNNING
           && (
           state != State.SUCCESSFUL
+              || (errorMode && printedDuringMethod)
               || (!errorMode && !repeatedTest)
-              || (debugMode && repeatedTest && !consoleCaptor.isNewEntry()))
+              || (debugMode && repeatedTest && printedDuringMethod))
           && !(state == State.NO_METHOD && repeatedTest)) {
         result.append(System.lineSeparator());
       }
@@ -314,7 +288,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
         lastPrintedLineLength = result.length();
       }
       clearLastLine();
-      defaultStdout.print(result);
+      stdOut.print(result);
     }
   }
 
@@ -328,7 +302,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       if (repeatedTest && state == State.NO_METHOD) {
         repeatedTestSummary += String.format("%n%s", prepareReason(state, cause));
       } else {
-        defaultStdout.println(prepareReason(state, cause));
+        stdOut.println(prepareReason(state, cause));
       }
     }
   }
@@ -336,16 +310,12 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private void printSummary() {
     if (!noClassDef && repeatedTest && successfulRepeatedTestInvocations > 0 && !errorMode) {
       clearLastLine();
-      defaultStdout.println(repeatedTestSummary);
+      stdOut.println(repeatedTestSummary);
     }
   }
 
   private void clearLastLine() {
-    defaultStdout.printf("\r%s\r", " ".repeat(lastPrintedLineLength));
-  }
-
-  private String prepareHeader() {
-    return String.format("Result of %s:%n%n", containerName);
+    stdOut.printf("\r%s\r", " ".repeat(lastPrintedLineLength));
   }
 
   private String prepareTestName(final ExtensionContext context) {
@@ -450,6 +420,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     var message = cause.getMessage();
     if (message != null && !message.isBlank()) {
       message = message.trim();
+      final var messageMaxLength = 600;
       if (!verboseMode && message.length() > messageMaxLength) {
         return String.format(
             "%s...%n%s",

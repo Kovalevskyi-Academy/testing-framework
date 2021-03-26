@@ -9,8 +9,17 @@ import academy.kovalevskyi.testing.exception.ContainerNotFoundException;
 import academy.kovalevskyi.testing.exception.NotAnnotatedContainerException;
 import academy.kovalevskyi.testing.service.ContainerRequest;
 import academy.kovalevskyi.testing.test.TestProvider;
+import academy.kovalevskyi.testing.test.five.TestClassEight;
+import academy.kovalevskyi.testing.test.five.TestClassEleven;
+import academy.kovalevskyi.testing.test.five.TestClassNine;
+import academy.kovalevskyi.testing.test.five.TestClassSeven;
+import academy.kovalevskyi.testing.test.five.TestClassTen;
+import academy.kovalevskyi.testing.test.five.TestClassThirteen;
+import academy.kovalevskyi.testing.test.five.TestClassTwelve;
+import academy.kovalevskyi.testing.test.four.TestClassSix;
 import academy.kovalevskyi.testing.test.one.TestClassOne;
 import academy.kovalevskyi.testing.test.one.TestClassTwo;
+import academy.kovalevskyi.testing.test.three.TestClassFive;
 import academy.kovalevskyi.testing.test.three.TestClassFour;
 import academy.kovalevskyi.testing.test.two.TestClassThree;
 import java.util.ArrayList;
@@ -77,8 +86,9 @@ public class ContainerManagerTest {
   public void testGetSpecifyContainer() {
     var request = ContainerRequest.builder().course(TestProvider.KEY).week(2).day(2).build();
     var list = ContainerManager.getContainers(request);
-    assertEquals(1, list.size());
+    assertEquals(2, list.size());
     assertEquals(TestClassFour.class, list.get(0));
+    assertEquals(TestClassFive.class, list.get(1));
   }
 
   @Test
@@ -98,7 +108,7 @@ public class ContainerManagerTest {
   }
 
   @Test
-  public void testNoContainers() {
+  public void testNoContainersWithRequest() {
     var request = ContainerRequest.builder().course("SOME_KEY").build();
     try {
       ContainerManager.getContainers(request);
@@ -132,6 +142,15 @@ public class ContainerManagerTest {
     original.add(TestClassTwo.class);
     original.add(TestClassThree.class);
     original.add(TestClassFour.class);
+    original.add(TestClassFive.class);
+    original.add(TestClassSix.class);
+    original.add(TestClassSeven.class);
+    original.add(TestClassEight.class);
+    original.add(TestClassNine.class);
+    original.add(TestClassTen.class);
+    original.add(TestClassEleven.class);
+    original.add(TestClassTwelve.class);
+    original.add(TestClassThirteen.class);
     return original;
   }
 }

@@ -8,9 +8,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class AbstractStdCaptorTest {
@@ -24,31 +24,34 @@ public class AbstractStdCaptorTest {
   }
 
   @Test
-  public void testSetUpMethodsPresent() {
-    var beforeEach = (Method) null;
-    var afterEach = (Method) null;
+  public void testConfigOfSetUpMethods() {
+    var beforeAll = false;
+    var afterAll = false;
     for (var method : AbstractStdCaptor.class.getDeclaredMethods()) {
-      if (method.isAnnotationPresent(BeforeEach.class)) {
-        beforeEach = method;
-      } else if (method.isAnnotationPresent(AfterEach.class)) {
-        afterEach = method;
+      if (method.isAnnotationPresent(BeforeAll.class)) {
+        beforeAll = true;
+        testPackageModifier(method);
+      } else if (method.isAnnotationPresent(AfterAll.class)) {
+        afterAll = true;
+        testPackageModifier(method);
       }
     }
 
-    assertNotNull(beforeEach);
-    assertNotNull(afterEach);
+    assertTrue(beforeAll);
+    assertTrue(afterAll);
   }
 
   @Test
-  public void testVisibilityOfSetUpMethods() {
+  public void testConfigOfResetMethod() {
+    var afterEach = false;
     for (var method : AbstractStdCaptor.class.getDeclaredMethods()) {
-      if (method.isAnnotationPresent(BeforeEach.class)
-          || method.isAnnotationPresent(AfterEach.class)) {
-        assertFalse(Modifier.isPrivate((method.getModifiers())));
-        assertFalse(Modifier.isPublic((method.getModifiers())));
-        assertFalse(Modifier.isProtected((method.getModifiers())));
+      if (method.isAnnotationPresent(AfterEach.class)) {
+        afterEach = true;
+        testPackageModifier(method);
       }
     }
+
+    assertTrue(afterEach);
   }
 
   @Test
@@ -56,73 +59,79 @@ public class AbstractStdCaptorTest {
     var defaultOut = System.out;
     var defaultErr = System.err;
 
-    abstractStdCaptor.setUpCustomOutput();
+    AbstractStdCaptor.setUpCustomOutput();
+
     assertNotEquals(defaultOut, System.out);
     assertNotEquals(defaultErr, System.err);
 
-    abstractStdCaptor.setUpDefaultOutput();
+    AbstractStdCaptor.setUpDefaultOutput();
+
     assertEquals(defaultOut, System.out);
     assertEquals(defaultErr, System.err);
   }
 
   @Test
   public void testSystemOutputsNotNull() {
-    abstractStdCaptor.setUpCustomOutput();
+    AbstractStdCaptor.setUpCustomOutput();
     assertNotNull(System.out);
     assertNotNull(System.err);
-    abstractStdCaptor.setUpDefaultOutput();
+    AbstractStdCaptor.setUpDefaultOutput();
   }
 
   @Test
   public void testStreamIsClosed() {
-    abstractStdCaptor.setUpCustomOutput();
+    AbstractStdCaptor.setUpCustomOutput();
     var customOut = System.out;
     var customErr = System.err;
-    abstractStdCaptor.setUpDefaultOutput();
+    abstractStdCaptor.resetBuffersData();
+    AbstractStdCaptor.setUpDefaultOutput();
 
-    customOut.write(7);
-    customErr.write(7);
+    customOut.write(10);
+    customErr.write(10);
 
-    assertTrue(abstractStdCaptor.getStdOutText().isEmpty());
-    assertTrue(abstractStdCaptor.getStdErrText().isEmpty());
+    assertTrue(abstractStdCaptor.getStdOutContent().isEmpty());
+    assertTrue(abstractStdCaptor.getStdErrContent().isEmpty());
   }
 
   @Test
   public void testCaptorMainFunction() {
-    abstractStdCaptor.setUpCustomOutput();
+    AbstractStdCaptor.setUpCustomOutput();
     var expected = "some text";
     System.out.print(expected);
     System.err.print(expected);
-    abstractStdCaptor.setUpDefaultOutput();
+    AbstractStdCaptor.setUpDefaultOutput();
 
-    assertEquals(expected, abstractStdCaptor.getStdOutText());
-    assertEquals(expected, abstractStdCaptor.getStdErrText());
+    assertEquals(expected, abstractStdCaptor.getStdOutContent());
+    assertEquals(expected, abstractStdCaptor.getStdErrContent());
   }
 
   @Test
   public void testCaptorHasDifferentBuffers() {
-    abstractStdCaptor.setUpCustomOutput();
+    AbstractStdCaptor.setUpCustomOutput();
     var stdOutText = "stdOut";
     var stdErrText = "stdErr";
     System.out.print(stdOutText);
     System.err.print(stdErrText);
-    abstractStdCaptor.setUpDefaultOutput();
+    AbstractStdCaptor.setUpDefaultOutput();
 
-    assertNotEquals(abstractStdCaptor.getStdOutText(), abstractStdCaptor.getStdErrText());
+    assertNotEquals(abstractStdCaptor.getStdOutContent(), abstractStdCaptor.getStdErrContent());
   }
 
   @Test
   public void testCaptorResetBuffersAfterEachTest() {
-    abstractStdCaptor.setUpCustomOutput();
+    AbstractStdCaptor.setUpCustomOutput();
     System.out.print("test");
     System.err.print("test");
-    abstractStdCaptor.setUpDefaultOutput();
+    abstractStdCaptor.resetBuffersData();
+    AbstractStdCaptor.setUpDefaultOutput();
 
-    abstractStdCaptor.setUpCustomOutput();
-    abstractStdCaptor.setUpDefaultOutput();
-
-    assertTrue(abstractStdCaptor.getStdOutText().isEmpty());
-    assertTrue(abstractStdCaptor.getStdErrText().isEmpty());
+    assertTrue(abstractStdCaptor.getStdOutContent().isEmpty());
+    assertTrue(abstractStdCaptor.getStdErrContent().isEmpty());
   }
 
+  private void testPackageModifier(Method method) {
+    assertFalse(Modifier.isPrivate((method.getModifiers())));
+    assertFalse(Modifier.isPublic((method.getModifiers())));
+    assertFalse(Modifier.isProtected((method.getModifiers())));
+  }
 }

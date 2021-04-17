@@ -31,6 +31,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private final boolean errorMode;
   private final boolean debugMode;
   private final boolean verboseMode;
+  private final Timer timer = new Timer(true);
   private final PrintStream stdOut = System.out;
   private final PrintStream stdErr = System.err;
   private final PrintStreamWrapper wrapper = new PrintStreamWrapper(System.out);
@@ -39,6 +40,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private int aborted = 0;
   private int disabled = 0;
   private int repeatedTestInvocations = 0;
+  private int repeatedTestInvocationsWithNoSuchMethodAndPrints = 0;
   private int successfulRepeatedTestInvocations = 0;
   private int failedRepeatedTestInvocations = 0;
   private int abortedRepeatedTestInvocations = 0;
@@ -47,11 +49,12 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   private long testTime = 0;
   private long repeatedTestTime = 0;
   private long beginning = 0;
-  private Timer timer;
   private String testName;
   private String repeatedTestSummary;
+  private TimerTask timerTask;
   private boolean repeatedTest = false;
   private boolean noClassDef = false;
+  private boolean noSuchMethod = false;
   private boolean printedDuringMethod = false;
   private boolean printedDuringErrorMode = false;
 
@@ -123,6 +126,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       testName = prepareTestName(context);
       printSummary();
       repeatedTest = false;
+      noSuchMethod = false;
     } else if (entryUniqueId.matches("^.+\\[test-template:.+\\)]$")) {
       testName = prepareTestName(context);
       printSummary();
@@ -132,8 +136,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       successfulRepeatedTestInvocations = 0;
       failedRepeatedTestInvocations = 0;
       abortedRepeatedTestInvocations = 0;
+      repeatedTestInvocationsWithNoSuchMethodAndPrints = 0;
     } else if (entryUniqueId.matches("^.+\\[test-template-invocation:#\\d+]$")) {
       repeatedTestInvocations++;
+      noSuchMethod = false;
     }
     return ConditionEvaluationResult.enabled("For printing result of test to console");
   }
@@ -145,13 +151,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
    */
   @Override
   public void beforeEach(ExtensionContext context) {
-    timer = new Timer(true);
-    timer.schedule(createTimer(), timeoutSec * 1_000);
+    timerTask = createNewTask();
+    timer.schedule(timerTask, timeoutSec * 1_000);
     printEntry(State.RUNNING);
     if (debugMode) {
-      if (errorMode) {
-        printedDuringMethod = false;
-      }
       wrapper.enable();
     }
     beginning = System.nanoTime();
@@ -176,7 +179,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       }
       wrapper.disable();
     }
-    timer.cancel();
+    timerTask.cancel();
   }
 
   /**
@@ -238,6 +241,10 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       noClassDef = true;
     } else if (getExceptionFromThrowableChain(cause, NoSuchMethodError.class).isPresent()) {
       printEntry(State.NO_METHOD, cause);
+      noSuchMethod = true;
+      if (repeatedTest && printedDuringMethod) {
+        repeatedTestInvocationsWithNoSuchMethodAndPrints++;
+      }
     } else {
       printEntry(State.FAILED, cause);
     }
@@ -259,6 +266,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     stdOut.println(underline(prepareFooter()));
     AnsiConsole.systemUninstall();
     wrapper.destroy();
+    timer.cancel();
     System.setOut(stdOut);
     System.setErr(stdErr);
   }
@@ -281,7 +289,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
               || (errorMode && printedDuringMethod)
               || (!errorMode && !repeatedTest)
               || (debugMode && repeatedTest && printedDuringMethod))
-          && !(state == State.NO_METHOD && repeatedTest)) {
+          && (!(state == State.NO_METHOD && repeatedTest) || printedDuringMethod)) {
         result.append(System.lineSeparator());
       }
       if (result.length() > lastPrintedLineLength) {
@@ -301,6 +309,9 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       }
       if (repeatedTest && state == State.NO_METHOD) {
         repeatedTestSummary += String.format("%n%s", prepareReason(state, cause));
+        if (printedDuringMethod) {
+          stdOut.println(prepareReason(state, cause));
+        }
       } else {
         stdOut.println(prepareReason(state, cause));
       }
@@ -308,7 +319,12 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
   }
 
   private void printSummary() {
-    if (!noClassDef && repeatedTest && successfulRepeatedTestInvocations > 0 && !errorMode) {
+    if (!noClassDef && repeatedTest
+        && (
+        (successfulRepeatedTestInvocations > 0 && !errorMode)
+            || (
+            noSuchMethod
+                && repeatedTestInvocationsWithNoSuchMethodAndPrints != repeatedTestInvocations))) {
       clearLastLine();
       stdOut.println(repeatedTestSummary);
     }
@@ -444,7 +460,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       result.format("- method is absent%n");
       result.a("- signature of method is different");
     } else if (state == State.INTERRUPTED) {
-      result.format("Time is out! Something went wrong...%n");
+      result.format("Time (%d sec) is out! Something went wrong...%n", timeoutSec);
     } else if (state == State.DISABLED) {
       result.a(prepareDisabledMessage(cause));
     } else if (cause instanceof AssertionError || cause instanceof TestAbortedException) {
@@ -459,7 +475,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
     return result.reset().toString();
   }
 
-  private TimerTask createTimer() {
+  private TimerTask createNewTask() {
     return new TimerTask() {
 
       @Override

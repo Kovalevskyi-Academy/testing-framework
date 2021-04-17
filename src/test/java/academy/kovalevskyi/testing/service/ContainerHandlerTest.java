@@ -30,33 +30,26 @@ import org.junit.jupiter.api.Test;
 
 public class ContainerHandlerTest {
 
-  public static final PrintStream defaultStdOut;
-  public static final PrintStream defaultStdErr;
+  private static final PrintStream DEFAULT_STD_OUT = System.out;
   private static final String TIME_GAG = "#####";
   private static final String TEMPLATE = "((\\d+\\ssec\\s)*(\\d+|\\d+.\\d+)\\s(ms|sec))";
   private static final String MESSAGE = "Some message ==> expected: <true> but was: <false>";
-  private static ByteArrayOutputStream buffer;
-
-  static {
-    defaultStdOut = System.out;
-    defaultStdErr = System.err;
-  }
+  private static final ByteArrayOutputStream BUFFER = new ByteArrayOutputStream();
 
   @BeforeAll
   public static void beforeAll() {
-    buffer = new ByteArrayOutputStream();
-    System.setOut(new PrintStream(buffer));
+    System.setOut(new PrintStream(BUFFER));
   }
 
   @AfterAll
   public static void afterAll() {
     System.out.close();
-    System.setOut(defaultStdOut);
+    System.setOut(DEFAULT_STD_OUT);
   }
 
   @AfterEach
   public void tearDown() {
-    buffer.reset();
+    BUFFER.reset();
   }
 
   @Test
@@ -115,12 +108,71 @@ public class ContainerHandlerTest {
   public void testNoMethods() {
     ContainerLauncher.execute(TestClassTwelve.class, false, false, false);
     var expected = String.format("Result of TestClassTwelve:\n\n"
-            + "noMethodOne() - %1$s\n\n"
-            + "TOTAL 1 | FAILED 1 | TIME %2$s",
+            + "noMethodThree() 2 tests - %1$s\n"
+            + "noMethodFour() 2 tests - %1$s\n"
+            + "noMethodOne() - %1$s\n"
+            + "noMethodTwo() 2 tests - %1$s\n\n"
+            + "TOTAL 7 | FAILED 7 | TIME %2$s",
         prepareStatus(State.NO_METHOD, "someMethod\n"
             + "Reasons:\n"
             + "- method is absent\n"
             + "- signature of method is different"),
+        TIME_GAG);
+
+    checkEntries(expected);
+  }
+
+  @Test
+  public void testNoMethodsWithDebugMode() {
+    ContainerLauncher.execute(TestClassTwelve.class, false, true, false);
+    var expected = String.format("Result of TestClassTwelve:\n\n"
+            + "noMethodThree() test 1 - %2$s:\n"
+            + "%3$s\n"
+            + "noMethodThree() test 1 [%4$s] - %1$s\n"
+            + "noMethodThree() test 2 - %2$s:\n"
+            + "%3$s\n"
+            + "noMethodThree() test 2 [%4$s] - %1$s\n"
+            + "noMethodFour() 2 tests [%4$s] - %1$s\n"
+            + "noMethodOne() [%4$s] - %1$s\n"
+            + "noMethodTwo() test 2 - %2$s:\n"
+            + "%3$s\n"
+            + "noMethodTwo() test 2 [%4$s] - %1$s\n"
+            + "noMethodTwo() 2 tests [%4$s] - %1$s\n\n"
+            + "TOTAL 7 | FAILED 7 | DEBUG MODE ON | TIME %4$s",
+        prepareStatus(State.NO_METHOD, "someMethod\n"
+            + "Reasons:\n"
+            + "- method is absent\n"
+            + "- signature of method is different"),
+        prepareStatus(State.RUNNING, null),
+        "some text",
+        TIME_GAG);
+
+    checkEntries(expected);
+  }
+
+  @Test
+  public void testNoMethodsWithDebugAndErrorMode() {
+    ContainerLauncher.execute(TestClassTwelve.class, true, true, false);
+    var expected = String.format("Result of TestClassTwelve:\n\n"
+            + "noMethodThree() test 1 - %2$s:\n"
+            + "%3$s\n"
+            + "noMethodThree() test 1 [%4$s] - %1$s\n"
+            + "noMethodThree() test 2 - %2$s:\n"
+            + "%3$s\n"
+            + "noMethodThree() test 2 [%4$s] - %1$s\n"
+            + "noMethodFour() 2 tests [%4$s] - %1$s\n"
+            + "noMethodOne() [%4$s] - %1$s\n"
+            + "noMethodTwo() test 2 - %2$s:\n"
+            + "%3$s\n"
+            + "noMethodTwo() test 2 [%4$s] - %1$s\n"
+            + "noMethodTwo() 2 tests [%4$s] - %1$s\n\n"
+            + "TOTAL 7 | FAILED 7 | ERROR MODE ON | DEBUG MODE ON | TIME %4$s",
+        prepareStatus(State.NO_METHOD, "someMethod\n"
+            + "Reasons:\n"
+            + "- method is absent\n"
+            + "- signature of method is different"),
+        prepareStatus(State.RUNNING, null),
+        "some text",
         TIME_GAG);
 
     checkEntries(expected);
@@ -284,13 +336,13 @@ public class ContainerHandlerTest {
   public void testTimeStamp() {
     ContainerLauncher.execute(TestClassOne.class, false, true, false);
     var entries = prepareConsoleView().split("\n");
-    defaultStdOut.println(prepareConsoleView());
+    DEFAULT_STD_OUT.println(prepareConsoleView());
     assertEquals(5, entries.length - 4);
     for (var index = 1; index < entries.length - 1; index++) {
       if (entries[index].isEmpty()) {
         continue;
       }
-      defaultStdOut.println(entries[index]);
+      DEFAULT_STD_OUT.println(entries[index]);
       assertTrue(entries[index].matches(".+((\\d+\\ssec\\s)*(\\d+|\\d+.\\d+)\\s(ms|sec)).*"));
     }
   }
@@ -619,7 +671,7 @@ public class ContainerHandlerTest {
         actualLines[actualLines.length - 2].length(),
         actualLines[actualLines.length - 1].length());
 
-    assertTrue(buffer.toString().endsWith("\n"));
+    assertTrue(BUFFER.toString().endsWith("\n"));
 
     for (var symbol : actualLines[actualLines.length - 1].toCharArray()) {
       assertEquals('-', symbol);
@@ -640,7 +692,7 @@ public class ContainerHandlerTest {
   }
 
   private String prepareConsoleView() {
-    var result = buffer.toString().replaceAll("\r", "");
+    var result = BUFFER.toString().replaceAll("\r", "");
     return Arrays.stream(result.split("\n"))
         .map(entry -> {
           var lastIndex = entry.lastIndexOf("  ");

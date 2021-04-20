@@ -282,11 +282,11 @@ public class PrintStreamWrapperTest {
     wrapper.enable();
     wrapper.print(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f", TEMPLATE, arg), BUFFER.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, arg), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f\n", TEMPLATE, arg), BUFFER.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, arg), BUFFER.toString());
 
     BUFFER.reset();
     wrapper.print(arg);
@@ -310,11 +310,11 @@ public class PrintStreamWrapperTest {
     wrapper.enable();
     wrapper.print(arg);
     assertTrue(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f", TEMPLATE, arg), BUFFER.toString());
+    assertEquals(String.format("%s%s", TEMPLATE, arg), BUFFER.toString());
 
     wrapper.disable();
     assertFalse(wrapper.hasContent());
-    assertEquals(String.format("%s%.1f\n", TEMPLATE, arg), BUFFER.toString());
+    assertEquals(String.format("%s%s\n", TEMPLATE, arg), BUFFER.toString());
 
     BUFFER.reset();
     wrapper.print(arg);
@@ -555,7 +555,7 @@ public class PrintStreamWrapperTest {
   @Test
   public void testPrintlnFloat() {
     var arg = 1F;
-    var expected = String.format("%s%.1f%n", TEMPLATE, arg);
+    var expected = String.format("%s%s%n", TEMPLATE, arg);
 
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());
@@ -584,7 +584,7 @@ public class PrintStreamWrapperTest {
   @Test
   public void testPrintlnDouble() {
     var arg = 1D;
-    var expected = String.format("%s%.1f%n", TEMPLATE, arg);
+    var expected = String.format("%s%s%n", TEMPLATE, arg);
 
     wrapper.println(arg);
     assertFalse(wrapper.hasContent());

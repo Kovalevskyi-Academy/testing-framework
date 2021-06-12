@@ -74,7 +74,7 @@ public final class ContainerLauncher {
       final var noClassException =
           ContainerHandler.getExceptionFromThrowableChain(exception, NoClassDefFoundError.class);
       if (noClassException.isPresent()) {
-        AnsiConsole.systemInstall();
+        AnsiConsoleInstaller.INSTANCE.systemInstall();
         var message = Ansi
             .ansi()
             .fg(State.NO_CLASS.color)
@@ -83,7 +83,7 @@ public final class ContainerLauncher {
             .toString();
         System.out.println(message);
         System.out.println("-----------------------------------------");
-        AnsiConsole.systemUninstall();
+        AnsiConsoleInstaller.INSTANCE.systemUninstall();
       } else {
         throw exception;
       }

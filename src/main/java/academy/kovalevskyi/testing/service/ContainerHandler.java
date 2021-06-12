@@ -9,6 +9,8 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
+
+import academy.kovalevskyi.testing.util.AnsiConsoleInstaller;
 import org.fusesource.jansi.Ansi;
 import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.extension.AfterAllCallback;
@@ -104,7 +106,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
    */
   @Override
   public void beforeAll(ExtensionContext context) {
-    AnsiConsole.systemInstall();
+    AnsiConsoleInstaller.INSTANCE.systemInstall();
     System.setOut(wrapper);
     System.setErr(wrapper);
     stdOut.printf("Result of %s:%n%n", context.getDisplayName());
@@ -264,7 +266,7 @@ public class ContainerHandler implements TestWatcher, BeforeAllCallback, AfterAl
       stdOut.println("You have no errors! Good job!");
     }
     stdOut.println(underline(prepareFooter()));
-    AnsiConsole.systemUninstall();
+    AnsiConsoleInstaller.INSTANCE.systemUninstall();
     wrapper.destroy();
     timer.cancel();
     System.setOut(stdOut);

@@ -1,5 +1,6 @@
 package academy.kovalevskyi.testing.service;
 
+import academy.kovalevskyi.testing.util.AnsiConsoleInstaller;
 import java.io.PrintStream;
 import java.util.Objects;
 import java.util.Optional;
@@ -9,10 +10,7 @@ import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
-
-import academy.kovalevskyi.testing.util.AnsiConsoleInstaller;
 import org.fusesource.jansi.Ansi;
-import org.fusesource.jansi.AnsiConsole;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;

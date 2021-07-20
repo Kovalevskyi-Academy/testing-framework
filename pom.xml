@@ -9,7 +9,8 @@
   <version>24-SNAPSHOT</version>
 
   <properties>
-    <java.version>11</java.version>
+    <java.version>16</java.version>
+    <checkstyle.version>8.41.1</checkstyle.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
 
@@ -106,7 +107,7 @@
           <dependency>
             <groupId>com.puppycrawl.tools</groupId>
             <artifactId>checkstyle</artifactId>
-            <version>8.41.1</version>
+            <version>${checkstyle.version}</version>
           </dependency>
         </dependencies>
         <executions>
@@ -120,6 +121,7 @@
         </executions>
         <configuration>
           <includeTestSourceDirectory>true</includeTestSourceDirectory>
+          <!--https://maven.apache.org/plugins/maven-checkstyle-plugin/examples/custom-checker-config.html-->
           <configLocation>google_checks.xml</configLocation>
           <encoding>UTF-8</encoding>
           <failsOnError>true</failsOnError>
@@ -132,6 +134,14 @@
   </build>
 
   <dependencies>
+    <!-- https://mvnrepository.com/artifact/com.puppycrawl.tools/checkstyle -->
+    <dependency>
+      <groupId>com.puppycrawl.tools</groupId>
+      <artifactId>checkstyle</artifactId>
+      <version>${checkstyle.version}</version>
+    </dependency>
+
+
     <!--    Required dependencies-->
     <dependency>
       <groupId>org.junit.platform</groupId>

@@ -4,6 +4,6 @@ steps:
   - name: 'gcr.io/cloud-builders/git'
     args: ['checkout', '$COMMIT_SHA']
     dir: 'testing-framework'
-  - name: 'maven:3.6.3-openjdk-15'
+  - name: 'maven:3.6.3-openjdk-16'
     args: ['mvn', '-Dmaven.wagon.http.retryHandler.count=3', 'compile', 'test', 'package', 'deploy']
     dir: 'testing-framework'

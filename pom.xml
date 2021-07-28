@@ -7,7 +7,7 @@
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
   <packaging>jar</packaging>
-  <version>24</version>
+  <version>25-SNAPSHOT</version>
 
   <name>TestingFramework</name>
   <description>

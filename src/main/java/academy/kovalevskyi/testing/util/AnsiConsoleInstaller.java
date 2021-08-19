@@ -19,6 +19,9 @@ public class AnsiConsoleInstaller {
     } catch (Throwable t) {
       installable = false;
       // it is ok to proceed
+      // TODO
+      // Возможно именно в этом месте живет баг игнора тестов!
+      // https://github.com/Kovalevskyi-Academy/Zeus/issues/103
     }
   }
 

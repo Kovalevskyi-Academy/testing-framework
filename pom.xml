@@ -15,7 +15,7 @@
   </description>
 
   <properties>
-    <java.version>16</java.version>
+    <java.version>17</java.version>
     <checkstyle.version>9.0</checkstyle.version>
     <junit.version>5.8.0</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

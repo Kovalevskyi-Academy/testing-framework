@@ -1,12 +1,9 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project>
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
   <version>28-SNAPSHOT</version>
 
   <name>TestingFramework</name>
@@ -17,8 +14,9 @@
   <properties>
     <java.version>17</java.version>
     <checkstyle.version>9.0</checkstyle.version>
-    <junit.version>5.8.0</junit.version>
+    <junit.version>5.8.1</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
   </properties>
 
   <distributionManagement>
@@ -101,7 +99,6 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.8.1</version>
         <configuration>
-          <release>${java.version}</release>
           <source>${java.version}</source>
           <target>${java.version}</target>
         </configuration>
@@ -137,6 +134,25 @@
           <suppressionsLocation>checkstyle-suppressions.xml</suppressionsLocation>
         </configuration>
       </plugin>
+      <plugin>
+        <groupId>org.jacoco</groupId>
+        <artifactId>jacoco-maven-plugin</artifactId>
+        <version>0.8.7</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>prepare-agent</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>report</id>
+            <phase>test</phase>
+            <goals>
+              <goal>report</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -170,11 +186,11 @@
       <artifactId>junit-jupiter-params</artifactId>
       <version>${junit.version}</version>
     </dependency>
-<!--    <dependency>-->
-<!--      <groupId>org.junit.vintage</groupId>-->
-<!--      <artifactId>junit-vintage-engine</artifactId>-->
-<!--      <version>${junit.version}</version>-->
-<!--    </dependency>-->
+    <!--    <dependency>-->
+    <!--      <groupId>org.junit.vintage</groupId>-->
+    <!--      <artifactId>junit-vintage-engine</artifactId>-->
+    <!--      <version>${junit.version}</version>-->
+    <!--    </dependency>-->
     <dependency>
       <groupId>org.fusesource.jansi</groupId>
       <artifactId>jansi</artifactId>

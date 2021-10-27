@@ -3,7 +3,7 @@
 
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
-  <packaging>pom</packaging>
+<!--  <packaging>jar</packaging>-->
   <version>28-SNAPSHOT</version>
 
   <name>TestingFramework</name>

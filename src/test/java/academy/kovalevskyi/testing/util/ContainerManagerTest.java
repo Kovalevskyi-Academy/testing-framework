@@ -3,7 +3,6 @@ package academy.kovalevskyi.testing.util;
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 import academy.kovalevskyi.testing.annotation.Container;
 import academy.kovalevskyi.testing.exception.ContainerNotFoundException;

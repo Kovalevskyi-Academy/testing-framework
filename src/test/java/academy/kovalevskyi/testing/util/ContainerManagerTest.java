@@ -2,6 +2,7 @@ package academy.kovalevskyi.testing.util;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import academy.kovalevskyi.testing.annotation.Container;
@@ -36,11 +37,8 @@ public class ContainerManagerTest {
 
   @Test
   public void testGetAnnotationIllegalArgument() {
-    try {
-      ContainerManager.getAnnotation(ContainerManagerTest.class);
-      fail();
-    } catch (NotAnnotatedContainerException ignored) {
-    }
+    assertThrows(NotAnnotatedContainerException.class,
+        () -> ContainerManager.getAnnotation(ContainerManagerTest.class));
   }
 
   @Test
@@ -61,11 +59,8 @@ public class ContainerManagerTest {
 
   @Test
   public void testInitProviderWithIllegalClassParameter() {
-    try {
-      ContainerManager.initProvider(ContainerManagerTest.class);
-      fail();
-    } catch (NotAnnotatedContainerException ignored) {
-    }
+    assertThrows(NotAnnotatedContainerException.class,
+        () -> ContainerManager.initProvider(ContainerManagerTest.class));
   }
 
   @Test
@@ -110,30 +105,21 @@ public class ContainerManagerTest {
   @Test
   public void testNoContainersWithRequest() {
     var request = ContainerRequest.builder().course("SOME_KEY").build();
-    try {
-      ContainerManager.getContainers(request);
-      fail();
-    } catch (ContainerNotFoundException ignored) {
-    }
+    assertThrows(ContainerNotFoundException.class,
+        () -> ContainerManager.getContainers(request));
   }
 
   @Test
   public void testReturnListIsUnmodifiable() {
-    try {
-      ContainerManager.getContainers().remove(0);
-      fail();
-    } catch (UnsupportedOperationException ignored) {
-    }
+    assertThrows(UnsupportedOperationException.class,
+        () -> ContainerManager.getContainers().remove(0));
   }
 
   @Test
   public void testReturnListIsUnmodifiableWithRequest() {
     var request = ContainerRequest.builder().course(TestProvider.KEY).build();
-    try {
-      ContainerManager.getContainers(request).remove(0);
-      fail();
-    } catch (UnsupportedOperationException ignored) {
-    }
+    assertThrows(UnsupportedOperationException.class,
+        () -> ContainerManager.getContainers(request).remove(0));
   }
 
   private List<Class<?>> getAllContainersInRightOrder() {

@@ -4,7 +4,7 @@
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
   <packaging>jar</packaging>
-  <version>29-SNAPSHOT</version>
+  <version>29</version>
 
   <name>TestingFramework</name>
   <description>
@@ -17,6 +17,7 @@
     <junit.version>5.8.1</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <slf4j.version>1.7.32</slf4j.version>
   </properties>
 
   <distributionManagement>
@@ -157,6 +158,14 @@
   </build>
 
   <dependencies>
+
+    <!-- https://mvnrepository.com/artifact/org.slf4j/slf4j-api -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+
     <!-- https://mvnrepository.com/artifact/com.puppycrawl.tools/checkstyle -->
     <dependency>
       <groupId>com.puppycrawl.tools</groupId>

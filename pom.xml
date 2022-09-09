@@ -4,7 +4,7 @@
   <groupId>academy.kovalevskyi</groupId>
   <artifactId>TestingFramework</artifactId>
   <packaging>jar</packaging>
-  <version>32</version>
+  <version>33-SNAPSHOT</version>
 
   <name>TestingFramework</name>
   <description>
@@ -17,7 +17,6 @@
     <junit.version>5.9.0</junit.version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <slf4j.version>1.7.35</slf4j.version>
   </properties>
 
   <distributionManagement>
